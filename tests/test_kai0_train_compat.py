@@ -83,7 +83,7 @@ def test_top_level_kai0_compatible_train_scripts_call_local_launcher():
         "train_pytorch.sh",
     }
 
-    scripts_dir = Path("tools_charles/train")
+    scripts_dir = Path("scripts/train")
     assert {path.name for path in scripts_dir.glob("train_*.sh")} == expected_scripts
     for script in scripts_dir.glob("train_*.sh"):
         text = script.read_text(encoding="utf-8")
