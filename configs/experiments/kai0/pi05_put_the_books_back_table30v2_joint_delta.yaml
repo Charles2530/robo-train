@@ -1,0 +1,17 @@
+defaults:
+  - pi05_put_the_books_back_table30v2_joint.yaml
+
+profile:
+  config_name: pi05_put_the_books_back_table30v2_joint_delta
+  script_name: train_put_the_books_back_table30v2_joint_delta.sh
+  task: put_the_books_back_table30v2_joint_delta
+  run_name: run1-put-books-back-table30v2-joint-delta-50000step-8card-bs256
+  description: Kai0 Table30v2 put-books-back delta joint action profile.
+
+action:
+  representation: joint_delta
+  action_dim: 14
+  control_mode: delta
+  use_next_state_as_action: true
+  use_delta_joint_actions: true
+  label_source: state_delta

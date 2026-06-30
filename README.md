@@ -27,12 +27,12 @@ small NumPy demo.
 
 | Reference | What UEFS borrows | Where it appears here | What UEFS intentionally does not copy |
 | --- | --- | --- | --- |
-| [StarVLA](https://github.com/starVLA/starVLA) | Lego-like module boundaries, raw model-agnostic dataloader output, and a model API centered on `forward()` plus `predict_action()`. | `schema/`, `data/adapters/`, `data/processors/`, `model/policy.py`, `trainer/mock_trainer.py`. | Real VLM/VLA backbones, tokenizer plumbing, distributed training, benchmark configs, and full model zoo logic. |
+| [StarVLA](https://github.com/starVLA/starVLA) | Lego-like module boundaries, raw model-agnostic dataloader output, and a model API centered on `forward()` plus `predict_action()`. | `schema/`, `data/adapters/`, `data/processors/`, `training/models/policy.py`, `training/trainer.py`. | Real VLM/VLA backbones, tokenizer plumbing, distributed training, benchmark configs, and full model zoo logic. |
 | [DreamZero / World Action Model](https://dreamzero0.github.io/) | Future-prediction objectives can share the same data and training infra as action policies. | `WorldModelDataView` and `world_model` loss profile keep this training path visible. | Video diffusion, real future-frame generation, GPU inference, WebSocket/distributed inference, and zero-shot claims. |
-| [kai0 / chi0](https://github.com/OpenDriveLab/kai0) | Stage-aware progress estimation, train-deploy alignment, temporal chunk-wise smoothing, DAgger/recovery interfaces, and policy-server/robot-client deployment shape. | `model/head/stage_advantage_head.py`, `train_deploy_alignment/`, `runtime/safety_shield.py`, `runtime/policy_server.py`, `runtime/mock_robot_client.py`. | Real checkpoint merging, real robot integration, intervention UI, real DAgger collection, and hardware-specific deployment scripts. |
-| [LightX2V](https://github.com/ModelTC/LightX2V) | Practical repo ergonomics: top-level `configs/`, runnable `scripts/`, quickstart-first README, and task-oriented command lines. | `configs/demo.yaml`, `src/scripts/`, README quickstart commands, `python -m ...` entrypoints. | Image/video generation backends, acceleration kernels, model-format conversion, and GPU serving stack. |
+| [kai0 / chi0](https://github.com/OpenDriveLab/kai0) | Train-script compatibility, task prompts, image maps, action dimensions, joint/delta action choices, and original dataset/checkpoint path conventions. | `configs/experiments/kai0/`, `src/training/kai0_profiles.py`, `src/scripts/kai0_train.py`, `tools_charles/train/`. | OpenPI/JAX/PyTorch heavy training internals, robot deployment, DAgger collection, and secrets from shell scripts. |
+| [LightX2V](https://github.com/ModelTC/LightX2V) | Practical repo ergonomics: top-level layered `configs/`, runnable scripts, quickstart-first README, and task-oriented command lines. | `configs/base/`, `configs/experiments/kai0/`, `src/config/layered.py`, `src/scripts/`, `tools_charles/train/`. | Image/video generation backends, acceleration kernels, model-format conversion, and GPU serving stack. |
 | [LeRobot](https://github.com/huggingface/lerobot) | Dataset/policy/training/deployment separation, reusable configs, and robotics dataset metadata. | `DatasetManifest`, `ExperimentConfig`, `data/adapters/`, `configs/`. | Hugging Face Hub integration, real robot drivers, real pretrained policies, and distributed training. |
-| [robomimic](https://robomimic.github.io/) | Config-driven imitation learning, algorithm abstraction, dataset splits, and reproducible experiment artifacts. | `ExperimentConfig`, `AlgorithmRegistry`, `TrainingArtifact`, `trainer/mock_trainer.py`. | Real PyTorch algorithms, robosuite integration, and full HDF5 training pipelines. |
+| [robomimic](https://robomimic.github.io/) | Config-driven imitation learning, algorithm abstraction, dataset splits, and reproducible experiment artifacts. | `ExperimentConfig`, `AlgorithmRegistry`, `TrainingArtifact`, `training/trainer.py`. | Real PyTorch algorithms, robosuite integration, and full HDF5 training pipelines. |
 | [ManiSkill](https://maniskill.readthedocs.io/) | Future benchmark adapters should stay outside data/training internals. | Deferred until eval infra is added. | GPU simulation, physics assets, task suites, and reinforcement-learning environments. |
 | [Isaac Lab](https://isaac-sim.github.io/IsaacLab/) | Future simulator integration should be an adapter layer, not training-core logic. | Deferred until eval/runtime infra is added. | Isaac Sim dependency, manager-based RL stack, physics simulation, and asset pipelines. |
 | [Diffusion Policy](https://github.com/real-stanford/diffusion_policy) | Sequence-action policies should register as training policies without changing data infra. | Future policy registry entry. | Real diffusion/flow model training and image backbone implementation. |
@@ -52,6 +52,7 @@ They also converge on a few practical principles:
 
 - **Stable protocol before model choice.** StarVLA's raw dict, kai0's deployment payloads, and UEFS's `Episode`/`EmbodiedBatch` all make data contracts explicit before choosing a backbone.
 - **Config and metadata are part of training.** LeRobot and robomimic show that datasets, splits, normalization stats, algorithms, and runtime horizons should be saved as structured experiment state.
+- **Layered configs beat script sprawl.** LightX2V-style `defaults` let a profile compose model, training, and task layers while keeping dataset and checkpoint paths explicit.
 - **Adapters unify data; DataView objects split training inputs.** VLA, 3D, and WM should not require three incompatible dataset stacks. UEFS converts sources to `Episode` first, then uses `VLADataView`, `Policy3DDataView`, or `WorldModelDataView`.
 - **LossProfile is the main training-family switch.** VLA action BC, 3D geometry-aware policy loss, and WM future-prediction loss live in separate loss modules.
 - **EmbodimentProfile handles robot-arm differences.** Franka, ALOHA, UR, and mobile manipulators should differ through robot/action/runtime profiles, not by duplicating the whole trainer.
@@ -105,21 +106,27 @@ pip install -e .
 pytest -q
 python -m src.scripts.run_local_demo
 python -m src.scripts.generate_demo_data --output ./demo_data --episodes 3
+python -m src.scripts.kai0_train pi05_arrange_flowers --dry-run --json
+bash tools_charles/train/train_arrange_flowers_table30v2.sh --dry-run
 ```
 
 ## Directory Structure
 
 ```text
-configs/demo.yaml
+configs/
+  base/                    # reusable model/train layers
+  experiments/kai0/         # Kai0-compatible task profiles
 docs/
   architecture.md
   framework_mapping.md
 src/
+  config/                  # layered YAML loader
   schema/                  # cross-layer Universal Embodied IR
   data/                    # adapters, validators, processors, storage, dataloader
     views/                 # VLA, 3D, and WM model-family views
   training/                # registry, artifacts, mock trainer, losses, minimal policy
   scripts/                 # python -m demo entrypoints
+tools_charles/train/        # Kai0-compatible shell wrappers
 tests/
 ```
 
@@ -136,6 +143,14 @@ frame, fields, units, fps, horizon, and dimensionality.
 training. A future HDF5, LeRobot, RLDS/OXE, MimicGen, or RoboCasa adapter can
 describe its source and splits in one place, while a trainer can select policy
 type and loss family without editing scripts.
+
+Kai0-compatible training profiles use a LightX2V-style layered config layout:
+`configs/base/model/*.yaml` defines shared model shape,
+`configs/base/train/*.yaml` defines launcher and training defaults, and
+`configs/experiments/kai0/*.yaml` only overrides task data, image mapping,
+prompt, action semantics, and run names. The original Kai0 dataset and
+checkpoint paths remain literal absolute paths in those profiles; the local
+project does not import from or depend on a checked-out `kai0/` folder.
 
 `TrainingProfile` is the clearer split between model families. It validates
 that `DataProfile`, `ModelFamily`, `LossProfile`, and `EmbodimentProfile` match:
@@ -163,7 +178,7 @@ and benchmark code can be added later without changing the data protocol.
 - No runtime server or real robot connection.
 - No real HDF5, LeRobot, or RLDS/OXE parsing.
 - No real video generation or diffusion.
-- No real DAgger optimization loop, policy server, or simulator backend.
+- No real OpenPI/Kai0 backend execution, DAgger loop, policy server, or simulator backend.
 
 The interfaces are intentionally shaped so those pieces can be added later
 without changing the data or training contracts.

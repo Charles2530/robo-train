@@ -73,3 +73,29 @@ the whole dataloader or trainer unless the model family truly changes.
 All core paths are deterministic when constructed with a seed. The mock model
 uses NumPy projections, deterministic language hashing, shared world-action
 latents, action clipping, and JSON-serializable runtime outputs.
+
+## Layered Configs And Kai0 Compatibility
+
+The config layout follows the LightX2V habit of keeping reusable layers visible
+at the top level:
+
+```text
+configs/base/model/pi05.yaml
+configs/base/train/kai0_jax.yaml
+configs/base/train/kai0_torch.yaml
+configs/experiments/kai0/*.yaml
+```
+
+`src.config.load_layered_yaml()` resolves `defaults` recursively and deep-merges
+later layers over earlier layers. A Kai0 task profile can therefore inherit the
+Pi0/Pi05 model layer and the JAX or PyTorch train layer, then only override
+dataset path, prompt, image mapping, action representation, action dimension,
+and script/run metadata.
+
+`src.training.kai0_profiles` converts the resolved YAML into the existing
+`ExperimentConfig` schema. This keeps Kai0 compatibility inside training infra
+instead of copying the old repository. The original input data and checkpoint
+paths remain unchanged as literal absolute paths, while
+`tools_charles/train/train_*.sh` wrappers call the local
+`python -m src.scripts.kai0_train` entrypoint. Deleting a local `kai0/` checkout
+does not affect these profiles or wrappers.

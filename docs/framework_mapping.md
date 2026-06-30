@@ -26,11 +26,13 @@ this phase.
 | `schema/sensor_card.py` | LeRobot, ROS-style robot stacks | `SensorCard` stores sensor type, frame, fps, shape, and camera intrinsics or extrinsic references. | robot metadata and calibration records |
 | `schema/experiment_config.py` | robomimic, LeRobot, LightX2V | Dataset, model/policy, and train params are configured together, not hidden in scripts. | robomimic config system, LeRobot training configs, LightX2V visible configs |
 | `schema/training_profile.py` | robomimic, OpenVLA, DP3, DreamZero | `TrainingProfile` validates `DataProfile`, `ModelFamily`, `LossProfile`, and `EmbodimentProfile` compatibility. | config-driven selection of observation modality, algorithm family, loss family, and robot profile |
+| `config/layered.py` | LightX2V | `defaults`-based YAML layering keeps base model/train config separate from task-specific overrides. | visible composable configs |
+| `training/kai0_profiles.py` | kai0, LightX2V, robomimic | Kai0 train profiles resolve into local `ExperimentConfig` objects while preserving original dataset and checkpoint paths. | train config compatibility without copying old repo internals |
 | `training/models/policy.py` | StarVLA, OpenVLA, Octo | The MVP keeps a tiny `forward()` policy only to exercise the training path. | StarVLA model entrypoint shape without heavy backbones |
 | `training/algorithm_registry.py` | robomimic, LeRobot | Algorithms and policies are registered by name so BC, VLA fine-tuning, or state-only policies can share launcher code. | robomimic algorithm abstraction, LeRobot policy factory pattern |
 | `training/loss_registry.py` | robomimic, Diffusion Policy, DreamZero | Loss functions are selected by `LossProfile`, not hardcoded inside the trainer. | separate imitation, 3D geometry, and future-prediction losses |
 | `training/artifacts.py` | robomimic, OpenVLA, Octo | Checkpoints carry experiment id, dataset ids, policy type, metrics, and processor stats. | reproducible imitation-learning and VLA fine-tuning artifacts |
-| `configs/` and `scripts/` | LightX2V, LeRobot | Keep config and runnable task entrypoints visible at the top level. | LightX2V `configs/`, LeRobot examples and command-line workflows |
+| `configs/` and `scripts/` | LightX2V, LeRobot, kai0 | Keep config and runnable task entrypoints visible at the top level, including `tools_charles/train` compatibility wrappers. | LightX2V `configs/`, LeRobot examples, kai0 train scripts |
 
 ## Shared Architecture Pattern
 

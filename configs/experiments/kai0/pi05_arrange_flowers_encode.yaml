@@ -1,0 +1,18 @@
+defaults:
+  - pi05_arrange_flowers.yaml
+
+profile:
+  config_name: pi05_arrange_flowers
+  script_name: train_arrange_flowers_encode.sh
+  task: arrange_flowers_encode
+  run_name: run1-arrange-flowers-encode-50000step-8card-bs256
+  description: Kai0 arrange-flowers encode helper profile.
+
+data:
+  required_subdir: videos
+
+encode:
+  variants:
+    - pyav
+    - torchcodec
+    - sparse

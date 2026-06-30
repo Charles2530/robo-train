@@ -1,0 +1,6 @@
+model:
+  family: pi05
+  policy_type: unified_mock
+  latent_dim: 32
+  action_horizon: 8
+  head: action_expert

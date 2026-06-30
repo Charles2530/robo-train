@@ -1,0 +1,20 @@
+defaults:
+  - pi05_put_the_books_back_table30v2.yaml
+
+profile:
+  config_name: pi05_put_the_books_back_table30v2_joint
+  script_name: train_put_the_books_back_table30v2_joint.sh
+  task: put_the_books_back_table30v2_joint
+  run_name: run1-put-books-back-table30v2-joint-50000step-8card-bs256
+  description: Kai0 Table30v2 put-books-back next-state joint action profile.
+
+data:
+  required_subdir: data
+
+action:
+  representation: joint_position
+  action_dim: 14
+  control_mode: absolute
+  use_next_state_as_action: true
+  use_delta_joint_actions: false
+  label_source: state_next

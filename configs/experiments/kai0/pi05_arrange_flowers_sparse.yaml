@@ -1,0 +1,13 @@
+defaults:
+  - pi05_arrange_flowers.yaml
+
+profile:
+  config_name: pi05_arrange_flowers_sparse
+  script_name: train_arrange_flowers_sparse.sh
+  task: arrange_flowers_sparse
+  run_name: run1-arrange-flowers-sparse-50000step-8card-bs256
+  description: Kai0 sparse arrange-flowers script profile.
+
+data:
+  dataset_path: /data/buaa/code/djy/kai0/processed/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers
+  required_subdir: videos

@@ -1,0 +1,23 @@
+launcher:
+  type: jax
+  command: scripts/train.py
+
+train:
+  algorithm: kai0_openpi_compat
+  batch_size: 256
+  num_workers: 8
+  num_train_steps: 50000
+  log_interval: 100
+  save_interval: 5000
+  keep_period: 5000
+  fsdp_devices: 1
+  overwrite: true
+  resume: false
+  wandb_enabled: false
+
+checkpoint:
+  params_path: /data/buaa/code/djy/kai0/checkpoints/pi05_base/params
+
+env:
+  JAX_PLATFORMS: cuda
+  OPENPI_VIDEO_BACKEND: torchcodec

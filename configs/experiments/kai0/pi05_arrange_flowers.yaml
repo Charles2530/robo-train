@@ -1,0 +1,32 @@
+defaults:
+  - ../../base/model/pi05.yaml
+  - ../../base/train/kai0_jax.yaml
+
+profile:
+  config_name: pi05_arrange_flowers
+  script_name: train_arrange_flowers.sh
+  task: arrange_flowers
+  run_name: run1-arrange-flowers-50000step-8card-bs256
+  description: Kai0 ARX5 single-arm arrange-flowers profile.
+
+data:
+  dataset_path: /data/buaa/code/djy/kai0/processed/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers
+  required_subdir: videos
+  default_prompt: insert the three flowers on the table into the vase one by one
+  image_map:
+    top_head: global_image
+    hand_left: wrist_image
+    hand_right: right_image
+  state_dim: 7
+  robot_family: arx5_single_arm
+  task_family: arrange_flowers
+  fps: 20.0
+  format: lerobot_v3
+
+action:
+  representation: eef_pose
+  action_dim: 7
+  control_mode: absolute
+  use_next_state_as_action: false
+  use_delta_joint_actions: false
+  label_source: action

@@ -1,0 +1,23 @@
+launcher:
+  type: torchrun
+  command: scripts/train_pytorch.py
+  nproc_per_node: 8
+
+train:
+  algorithm: kai0_openpi_torch_compat
+  batch_size: 256
+  num_workers: 8
+  num_train_steps: 70000
+  log_interval: 100
+  save_interval: 5000
+  keep_period: 5000
+  fsdp_devices: 8
+  overwrite: true
+  resume: false
+  wandb_enabled: false
+
+checkpoint:
+  params_path: /data/perception_datas0/zfj/kai0/checkpoints/pi05_base_pytorch
+
+env:
+  OPENPI_VIDEO_BACKEND: torchcodec
