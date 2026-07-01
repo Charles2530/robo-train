@@ -1,5 +1,6 @@
 defaults:
   - ../../../base/model/pi05.yaml
+  - ../../../datasets/xiaoyu_task_a/agilex_dual_arm.yaml
   - ../base/kai0_torch.yaml
 
 profile:
@@ -11,17 +12,8 @@ profile:
 
 data:
   dataset_path: datasets/xiaoyu_Task_A/advantage
-  required_subdir: data
   default_prompt: Flatten and fold the cloth.
-  image_map:
-    top_head: global_image
-    hand_left: left_wrist_image
-    hand_right: right_wrist_image
-  state_dim: 14
-  robot_family: agilex_dual_arm
   task_family: flatten_fold
-  fps: 20.0
-  format: lerobot_v3
 
 action:
   representation: joint_position

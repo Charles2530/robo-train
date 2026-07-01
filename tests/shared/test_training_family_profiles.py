@@ -1,8 +1,5 @@
-from pathlib import Path
-
 import pytest
 
-from robo_train.schema.experiment_config import ExperimentConfig
 from robo_train.schema.training_profile import (
     DataProfile,
     EmbodimentProfile,
@@ -73,15 +70,18 @@ def test_training_profile_rejects_required_modality_gaps():
 
 
 def test_family_config_samples_validate():
-    expected = {
-        "configs/vla_demo.json": (DataProfile.VLA, LossProfile.VLA_BC),
-        "configs/policy3d_demo.json": (DataProfile.POLICY_3D, LossProfile.POLICY_3D_BC),
-        "configs/world_model_demo.json": (DataProfile.WORLD_MODEL, LossProfile.WORLD_MODEL),
-    }
+    samples = [
+        TrainingProfile.default_vla(),
+        TrainingProfile.default_policy3d(),
+        TrainingProfile.default_world_model(),
+    ]
+    expected = [
+        (DataProfile.VLA, LossProfile.VLA_BC),
+        (DataProfile.POLICY_3D, LossProfile.POLICY_3D_BC),
+        (DataProfile.WORLD_MODEL, LossProfile.WORLD_MODEL),
+    ]
 
-    for path, (data_profile, loss_profile) in expected.items():
-        config = ExperimentConfig.from_json(path)
-        assert Path(path).exists()
-        assert config.training_profile.data_profile == data_profile
-        assert config.training_profile.loss_profile == loss_profile
-        assert config.training_profile.embodiment_profile
+    for profile, (data_profile, loss_profile) in zip(samples, expected, strict=True):
+        assert profile.data_profile == data_profile
+        assert profile.loss_profile == loss_profile
+        assert profile.embodiment_profile

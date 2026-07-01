@@ -1,0 +1,15 @@
+data:
+  dataset_id: libero_generic
+  dataset_type: LIBERO
+  dataset_path: datasets/LIBERO
+  required_subdir: null
+  default_prompt: ""
+  image_map: {}
+  state_dim: 1
+  robot_family: unknown
+  task_family: generic
+  fps: 20.0
+  format: libero
+  supported_frameworks: []
+  preprocessors:
+    - TODO_convert_to_framework_format

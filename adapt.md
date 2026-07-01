@@ -4,36 +4,70 @@
 
 ## 新增数据集
 
-新增数据集时，先判断它是“已有框架后端直接可读的数据路径”，还是“需要 Robo-Train 自己解析成通用 IR 的新格式”。
+新增数据集时，先把数据集本身写成独立 config，再决定它是“已有框架后端直接可读的数据路径”，还是“需要 Robo-Train 自己解析成通用 IR 的新格式”。
+
+### 数据集配置层
+
+每个具身数据集应按“数据集家族/机器人构型”组织配置，例如：
+
+```text
+configs/datasets/robochallenge_table30v2/aloha_dual_arm.yaml
+configs/datasets/robochallenge_table30v2/arx5_single_arm.yaml
+configs/datasets/xiaoyu_task_a/agilex_dual_arm.yaml
+configs/datasets/libero/generic.yaml
+```
+
+数据集/机器人 config 只描述数据集家族、机器人构型和通用数据形态，不描述某个具体任务：
+
+```yaml
+data:
+  dataset_id: robochallenge_table30v2_aloha_dual_arm
+  dataset_type: RoboChallenge_Table30v2
+  dataset_path: datasets/RoboChallenge_Table30v2_v2.1_pyav_g2
+  robot_family: aloha_dual_arm
+  task_family: generic
+  format: lerobot_v3
+  supported_frameworks:
+    - kai0
+  preprocessors:
+    - pyav_g2_reencoded
+```
+
+如果某个组合不支持，例如 LIBERO 暂时不能直接用 Kai0 训练，就不要在
+`supported_frameworks` 里写 `kai0`。Kai0 profile 加载时会直接报错，而不是启动后端才失败。
 
 ### 情况 A：已有训练后端直接读取
 
-例如 Kai0/OpenPI 已经能读取 LeRobot 风格目录，本仓库只需要新增 profile：
+例如 Kai0/OpenPI 已经能读取 LeRobot 风格目录，本仓库只需要新增或复用 dataset/robot config，再新增 framework task profile：
 
-1. 在对应框架任务目录新增 YAML：
+1. 在 `configs/datasets/<dataset>/<robot>.yaml` 中声明数据集类型、机器人构型、通用路径和支持的框架。
+2. 在对应框架任务目录新增 YAML：
    - Kai0: `configs/frameworks/kai0/tasks/<profile>.yaml`
    - 未来其它框架: `configs/frameworks/<framework>/tasks/<profile>.yaml`
-2. 在 YAML 中声明：
+3. 在 task YAML 的 `defaults` 中组合 dataset、model 和 framework base：
+   ```yaml
+   defaults:
+     - ../../../base/model/pi05.yaml
+     - ../../../datasets/robochallenge_table30v2/aloha_dual_arm.yaml
+     - ../base/kai0_jax.yaml
+   ```
+4. 在 task YAML 中只声明训练任务/action 覆盖：
    - `profile.config_name`
    - `profile.script_name`
    - `profile.task`
    - `profile.run_name`
    - `data.dataset_path`
-   - `data.required_subdir`
    - `data.default_prompt`
-   - `data.image_map`
-   - `data.state_dim`
-   - `data.robot_family`
    - `data.task_family`
    - `action.representation`
    - `action.action_dim`
    - `action.control_mode`
    - `action.label_source`
-3. 如需常用 shell 命令，新增：
+5. 如需常用 shell 命令，新增：
    - `scripts/frameworks/<framework>/train_<task>.sh`
-4. 为该 profile 增加框架专属测试：
+6. 为该 profile 增加框架专属测试：
    - `tests/frameworks/<framework>/test_<task>.py`
-5. 至少验证：
+7. 至少验证：
    - `python -m robo_train.cli.train --framework <framework> <profile> --dry-run --json`
    - 对应 shell wrapper 的 `--dry-run --json`
    - 若有 GPU 和数据，跑极短 smoke train。
@@ -76,7 +110,7 @@
 
 ## 新增训练框架
 
-新增框架时，按 Kai0 的 plugin 结构复制，不要修改 Kai0 逻辑，不要在统一 CLI 中加框架分支。
+新增框架时，按 Kai0 的 plugin 结构复制，不要修改 Kai0 逻辑，不要在统一 CLI 中加框架分支。每个框架目录都应该有 README 解释文件职责，Kai0 的示例在 `src/robo_train/frameworks/kai0/README.md`。
 
 ### 需要新增的代码
 
@@ -84,10 +118,10 @@
 
 ```text
 profile_schema.py     # Pydantic schema: profile/data/model/train/launcher/checkpoint/env
-loader.py             # list_profiles/load_profile，读取 configs/frameworks/<name>/tasks/*.yaml
-converter.py          # 转成 ExperimentConfig 和 JSON payload
-launcher.py           # 解析真实后端 command/env/log/checkpoint/dataset
-plugin.py             # 实现 FrameworkPlugin 并注册到 FRAMEWORK_REGISTRY
+loader.py             # 只负责 list/load YAML profile，并解析 defaults
+converter.py          # 只负责转成 ExperimentConfig 和 dry-run JSON payload
+launcher.py           # 只负责真实后端 command/env/log/checkpoint/dataset/preprocess
+plugin.py             # 只负责实现 FrameworkPlugin 并注册到 FRAMEWORK_REGISTRY
 __init__.py           # 导出公开 API
 ```
 

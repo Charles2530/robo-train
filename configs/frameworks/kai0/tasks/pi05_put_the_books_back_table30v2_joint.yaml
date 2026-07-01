@@ -1,5 +1,7 @@
 defaults:
-  - pi05_put_the_books_back_table30v2.yaml
+  - ../../../base/model/pi05.yaml
+  - ../../../datasets/robochallenge_table30v2/aloha_dual_arm.yaml
+  - ../base/kai0_jax.yaml
 
 profile:
   config_name: pi05_put_the_books_back_table30v2_joint
@@ -9,7 +11,10 @@ profile:
   description: Kai0 Table30v2 put-books-back next-state joint action profile.
 
 data:
+  dataset_path: datasets/RoboChallenge_Table30v2_v2.1_pyav_g2/put_the_books_back
   required_subdir: data
+  default_prompt: Place the books back onto the bookshelf.
+  task_family: put_the_books_back
 
 action:
   representation: joint_position
@@ -18,3 +23,6 @@ action:
   use_next_state_as_action: true
   use_delta_joint_actions: false
   label_source: state_next
+
+train:
+  wandb_enabled: true

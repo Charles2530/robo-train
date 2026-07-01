@@ -1,0 +1,19 @@
+data:
+  dataset_id: robochallenge_table30v2_arx5_single_arm
+  dataset_type: RoboChallenge_Table30v2
+  dataset_path: datasets/RoboChallenge_Table30v2_v2.1_pyav_g2
+  required_subdir: videos
+  default_prompt: ""
+  image_map:
+    top_head: global_image
+    hand_left: wrist_image
+    hand_right: side_image
+  state_dim: 7
+  robot_family: arx5_single_arm
+  task_family: generic
+  fps: 20.0
+  format: lerobot_v3
+  supported_frameworks:
+    - kai0
+  preprocessors:
+    - pyav_g2_reencoded

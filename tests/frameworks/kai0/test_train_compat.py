@@ -4,8 +4,13 @@ import subprocess
 import sys
 from pathlib import Path
 
+import pytest
+import yaml
+from pydantic import ValidationError
+
 from robo_train.frameworks.backend_env import resolve_backend_subprocess_env
 from robo_train.frameworks.kai0.plugin import Kai0FrameworkPlugin
+from robo_train.frameworks.kai0.profile_schema import Kai0TrainProfile
 from robo_train.training.kai0_launcher import build_kai0_launch_spec
 from robo_train.training.kai0_profiles import build_experiment_config, load_kai0_train_profile
 
@@ -14,7 +19,10 @@ def test_kai0_layered_profile_preserves_dataset_and_checkpoint_paths():
     profile = load_kai0_train_profile("pi05_put_the_books_back_table30v2_joint_delta")
 
     assert profile.config_name == "pi05_put_the_books_back_table30v2_joint_delta"
+    assert profile.data.dataset_id == "robochallenge_table30v2_aloha_dual_arm"
+    assert profile.data.dataset_type == "RoboChallenge_Table30v2"
     assert profile.data.dataset_path == "datasets/RoboChallenge_Table30v2_v2.1_pyav_g2/put_the_books_back"
+    assert profile.data.supported_frameworks == ["kai0"]
     assert profile.checkpoint.params_path == "checkpoints/kai0/kai0-base/pi05_base/params"
     assert profile.data.image_map == {
         "top_head": "global_image",
@@ -29,6 +37,16 @@ def test_kai0_layered_profile_preserves_dataset_and_checkpoint_paths():
     assert profile.train.num_train_steps == 50_000
 
 
+def test_kai0_task_profiles_do_not_inherit_from_other_task_profiles():
+    tasks_dir = Path("configs/frameworks/kai0/tasks")
+    for path in tasks_dir.glob("*.yaml"):
+        payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        for default in payload.get("defaults", []) or []:
+            if isinstance(default, dict):
+                default = next(iter(default.values()))
+            assert "/" in default, f"{path} must not inherit from another task profile: {default}"
+
+
 def test_kai0_profile_builds_experiment_config_with_overrides():
     profile = load_kai0_train_profile("pi05_arrange_flowers_table30v2")
     experiment = build_experiment_config(
@@ -41,11 +59,23 @@ def test_kai0_profile_builds_experiment_config_with_overrides():
 
     assert experiment.experiment_id == "smoke-table30v2"
     assert experiment.datasets[0].manifest.source_uri == profile.data.dataset_path
-    assert experiment.datasets[0].manifest.dataset_id == "kai0_pi05_arrange_flowers_table30v2"
+    assert experiment.datasets[0].manifest.dataset_id == "robochallenge_table30v2_arx5_single_arm"
+    assert experiment.datasets[0].manifest.metadata["dataset_type"] == "RoboChallenge_Table30v2"
     assert experiment.policy.action_dim == 8
     assert experiment.trainer.batch_size == 8
     assert experiment.trainer.kwargs["num_train_steps"] == 12
     assert experiment.trainer.kwargs["num_workers"] == 2
+
+
+def test_kai0_profile_rejects_unsupported_dataset_framework_combo():
+    profile = load_kai0_train_profile("pi05_put_the_books_back_table30v2").model_dump(mode="python")
+    profile["data"]["dataset_id"] = "libero"
+    profile["data"]["dataset_type"] = "LIBERO"
+    profile["data"]["dataset_path"] = "datasets/LIBERO"
+    profile["data"]["supported_frameworks"] = ["dreamzero"]
+
+    with pytest.raises(ValidationError, match="does not support framework 'kai0'"):
+        Kai0TrainProfile.model_validate(profile)
 
 
 def test_kai0_train_cli_dry_run_does_not_need_kai0_folder():

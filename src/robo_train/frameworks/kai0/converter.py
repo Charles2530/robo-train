@@ -20,7 +20,7 @@ def build_experiment_config(
 ) -> ExperimentConfig:
     """Convert a Kai0 layered profile into the framework ExperimentConfig."""
     manifest = DatasetManifest(
-        dataset_id=f"kai0_{profile.config_name}",
+        dataset_id=profile.data.dataset_id or f"kai0_{profile.config_name}",
         name=profile.profile.task,
         source_framework="kai0",
         source_uri=profile.data.dataset_path,
@@ -29,12 +29,15 @@ def build_experiment_config(
         splits={"train": 1.0},
         stats_path=profile.data.norm_stats_path,
         metadata={
+            "dataset_type": profile.data.dataset_type,
             "prompt": profile.data.default_prompt,
             "image_map": profile.data.image_map,
             "required_subdir": profile.data.required_subdir,
             "format": profile.data.format,
             "state_dim": profile.data.state_dim,
             "fps": profile.data.fps,
+            "supported_frameworks": profile.data.supported_frameworks,
+            "preprocessors": profile.data.preprocessors,
         },
     )
     train_kwargs = _train_kwargs(profile, num_train_steps=num_train_steps, num_workers=num_workers)

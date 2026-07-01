@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 DEFAULT_KAI0_CONFIG_DIR = Path("configs/frameworks/kai0/tasks")
@@ -43,8 +43,10 @@ class Kai0ModelConfig(BaseModel):
 
 
 class Kai0DataConfig(BaseModel):
-    """Dataset and modality mapping from Kai0 train configs."""
+    """Dataset identity, path, and modality mapping consumed by Kai0."""
 
+    dataset_id: str | None = None
+    dataset_type: str = "unknown"
     dataset_path: str
     required_subdir: str | None = None
     default_prompt: str
@@ -55,6 +57,8 @@ class Kai0DataConfig(BaseModel):
     fps: float = Field(default=20.0, gt=0)
     norm_stats_path: str | None = None
     format: str = "lerobot"
+    supported_frameworks: list[str] = Field(default_factory=lambda: ["kai0"])
+    preprocessors: list[str] = Field(default_factory=list)
 
 
 class Kai0ActionConfig(BaseModel):
@@ -118,3 +122,12 @@ class Kai0TrainProfile(BaseModel):
     def run_name(self) -> str:
         """Return the default experiment run name."""
         return self.profile.run_name or f"run1-{self.config_name}"
+
+    @model_validator(mode="after")
+    def validate_dataset_framework_support(self) -> "Kai0TrainProfile":
+        """Reject dataset/framework combinations that are not declared supported."""
+        if "kai0" not in self.data.supported_frameworks:
+            dataset = self.data.dataset_id or self.data.dataset_path
+            supported = ", ".join(self.data.supported_frameworks) or "<none>"
+            raise ValueError(f"dataset {dataset!r} does not support framework 'kai0'; supported: {supported}")
+        return self

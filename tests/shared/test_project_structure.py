@@ -3,7 +3,9 @@ from pathlib import Path
 import tomllib
 
 import robo_train
-from robo_train.schema.experiment_config import ExperimentConfig
+from robo_train.schema.dataset_manifest import DatasetManifest
+from robo_train.schema.experiment_config import DatasetConfig, ExperimentConfig, PolicyConfig, TrainerConfig
+from robo_train.schema.training_profile import TrainingProfile
 
 
 def test_package_metadata_uses_robo_train_name():
@@ -61,22 +63,61 @@ def test_framework_mapping_doc_covers_reference_projects():
         assert expected in text
 
 
-def test_demo_experiment_config_validates():
-    config = ExperimentConfig.from_json("configs/experiment_demo.json")
+def test_experiment_config_schema_validates_minimal_synthetic_config():
+    config = ExperimentConfig(
+        experiment_id="robo-train-synthetic-bc-test",
+        datasets=[
+            DatasetConfig(
+                manifest=DatasetManifest(
+                    dataset_id="synthetic_test",
+                    name="Synthetic Pick Place",
+                    source_framework="robo_train.synthetic",
+                    source_uri="memory://synthetic",
+                    task_families=["pick_place"],
+                    robot_families=["franka"],
+                    splits={"train": 1.0},
+                )
+            )
+        ],
+        training_profile=TrainingProfile.default_vla(embodiment_profile="franka_single_arm"),
+        policy=PolicyConfig(policy_type="unified_mock"),
+        trainer=TrainerConfig(algorithm="behavior_cloning"),
+    )
 
-    assert config.experiment_id == "src-synthetic-bc-demo"
-    assert config.datasets[0].manifest.dataset_id == "synthetic_demo"
+    assert config.experiment_id == "robo-train-synthetic-bc-test"
+    assert config.datasets[0].manifest.dataset_id == "synthetic_test"
     assert config.policy.policy_type == "unified_mock"
     assert config.trainer.algorithm == "behavior_cloning"
 
 
-def test_family_demo_configs_exist_and_validate():
-    expected_profiles = {
-        "configs/vla_demo.json": "vla",
-        "configs/policy3d_demo.json": "policy_3d",
-        "configs/world_model_demo.json": "world_model",
-    }
+def test_family_training_profiles_validate_in_experiment_configs():
+    configs = [
+        ExperimentConfig(experiment_id="test-vla", datasets=[_synthetic_dataset()], training_profile=TrainingProfile.default_vla()),
+        ExperimentConfig(
+            experiment_id="test-policy3d",
+            datasets=[_synthetic_dataset()],
+            training_profile=TrainingProfile.default_policy3d(),
+        ),
+        ExperimentConfig(
+            experiment_id="test-world-model",
+            datasets=[_synthetic_dataset()],
+            training_profile=TrainingProfile.default_world_model(),
+        ),
+    ]
 
-    for path, data_profile in expected_profiles.items():
-        config = ExperimentConfig.from_json(path)
+    for config, data_profile in zip(configs, ["vla", "policy_3d", "world_model"], strict=True):
         assert config.training_profile.data_profile == data_profile
+
+
+def _synthetic_dataset() -> DatasetConfig:
+    return DatasetConfig(
+        manifest=DatasetManifest(
+            dataset_id="synthetic_test",
+            name="Synthetic",
+            source_framework="robo_train.synthetic",
+            source_uri="memory://synthetic",
+            task_families=["pick_place"],
+            robot_families=["franka"],
+            splits={"train": 1.0},
+        )
+    )

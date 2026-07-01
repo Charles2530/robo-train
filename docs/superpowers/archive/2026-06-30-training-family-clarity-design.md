@@ -54,8 +54,9 @@ Raw Dataset
   - Lets `ExperimentConfig.training_profile.loss_profile` select the loss family.
 - `src/trainer/losses_vla.py`, `losses_3d.py`, `losses_wm.py`
   - Keep loss-family logic separate and testable.
-- `configs/vla_demo.json`, `configs/policy3d_demo.json`, `configs/world_model_demo.json`
-  - Show the three intended training paths clearly.
+- Historical root-level family demo JSON samples
+  - These were later removed when configs were reorganized around
+    `configs/base/`, `configs/datasets/`, and `configs/frameworks/`.
 - Docs
   - README, README_zh, architecture, and framework mapping should explain that adapters unify data, views split training inputs, and embodiment profiles split robot-specific runtime behavior.
 

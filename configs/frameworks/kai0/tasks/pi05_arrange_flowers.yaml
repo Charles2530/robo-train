@@ -1,5 +1,6 @@
 defaults:
   - ../../../base/model/pi05.yaml
+  - ../../../datasets/robochallenge_table30/arx5_single_arm.yaml
   - ../base/kai0_jax.yaml
 
 profile:
@@ -11,17 +12,8 @@ profile:
 
 data:
   dataset_path: datasets/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers
-  required_subdir: videos
   default_prompt: insert the three flowers on the table into the vase one by one
-  image_map:
-    top_head: global_image
-    hand_left: wrist_image
-    hand_right: right_image
-  state_dim: 7
-  robot_family: arx5_single_arm
   task_family: arrange_flowers
-  fps: 20.0
-  format: lerobot_v3
 
 action:
   representation: eef_pose

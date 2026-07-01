@@ -1,5 +1,6 @@
 defaults:
   - ../../../base/model/pi05.yaml
+  - ../../../datasets/robochallenge_table30v2/aloha_dual_arm.yaml
   - ../base/kai0_jax.yaml
 
 profile:
@@ -11,17 +12,8 @@ profile:
 
 data:
   dataset_path: datasets/RoboChallenge_Table30v2_v2.1_pyav_g2/put_the_books_back
-  required_subdir: videos
   default_prompt: Place the books back onto the bookshelf.
-  image_map:
-    top_head: global_image
-    hand_left: left_wrist_image
-    hand_right: right_wrist_image
-  state_dim: 14
-  robot_family: aloha_dual_arm
   task_family: put_the_books_back
-  fps: 20.0
-  format: lerobot_v3
 
 action:
   representation: eef_pose_quaternion

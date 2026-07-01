@@ -75,13 +75,13 @@
 - [ ] Implement registry and three loss modules.
 - [ ] Run focused tests and confirm pass.
 
-### Task 4: Config Samples and Experiment Wiring
+### Task 4: Historical Config Samples and Experiment Wiring
 
 **Files:**
 - Modify: `src/schema/experiment_config.py`
-- Add: `configs/vla_demo.json`
-- Add: `configs/policy3d_demo.json`
-- Add: `configs/world_model_demo.json`
+- Add historical root-level family demo JSON samples. These files were later
+  removed when configs were reorganized around `configs/base/`,
+  `configs/datasets/`, and `configs/frameworks/`.
 - Modify: `tests/test_project_structure.py`
 
 **Interfaces:**

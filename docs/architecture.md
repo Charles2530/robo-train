@@ -81,16 +81,18 @@ at the top level:
 
 ```text
 configs/base/model/pi05.yaml
+configs/datasets/<dataset>/<robot>.yaml
 configs/frameworks/kai0/base/kai0_jax.yaml
 configs/frameworks/kai0/base/kai0_torch.yaml
 configs/frameworks/kai0/tasks/*.yaml
 ```
 
-`src.config.load_layered_yaml()` resolves `defaults` recursively and deep-merges
-later layers over earlier layers. A Kai0 task profile can therefore inherit the
-Pi0/Pi05 model layer and the JAX or PyTorch train layer, then only override
-dataset path, prompt, image mapping, action representation, action dimension,
-and script/run metadata.
+`robo_train.config.load_layered_yaml()` resolves `defaults` recursively and
+deep-merges later layers over earlier layers. A Kai0 task profile composes the
+Pi0/Pi05 model layer, a dataset/robot layer, and the JAX or PyTorch train layer,
+then explicitly declares task path, prompt, action representation, action
+dimension, and script/run metadata. Task profiles do not inherit from each
+other.
 
 `robo_train.frameworks.kai0.converter` converts the resolved YAML into the existing
 `ExperimentConfig` schema, and `robo_train.frameworks.kai0.launcher` resolves the real

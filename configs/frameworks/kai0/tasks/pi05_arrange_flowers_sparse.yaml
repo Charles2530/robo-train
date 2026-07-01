@@ -1,5 +1,7 @@
 defaults:
-  - pi05_arrange_flowers.yaml
+  - ../../../base/model/pi05.yaml
+  - ../../../datasets/robochallenge_table30/arx5_single_arm.yaml
+  - ../base/kai0_jax.yaml
 
 profile:
   config_name: pi05_arrange_flowers_sparse
@@ -11,3 +13,13 @@ profile:
 data:
   dataset_path: datasets/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers
   required_subdir: videos
+  default_prompt: insert the three flowers on the table into the vase one by one
+  task_family: arrange_flowers
+
+action:
+  representation: eef_pose
+  action_dim: 7
+  control_mode: absolute
+  use_next_state_as_action: false
+  use_delta_joint_actions: false
+  label_source: action
