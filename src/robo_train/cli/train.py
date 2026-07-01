@@ -9,6 +9,7 @@ import subprocess
 from typing import Any
 
 from robo_train.frameworks import FRAMEWORK_REGISTRY
+from robo_train.frameworks.backend_env import resolve_backend_subprocess_env
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -113,7 +114,7 @@ def _run_backend_payload(backend: dict[str, Any]) -> int:
         process = subprocess.Popen(
             backend["command"],
             cwd=backend["cwd"],
-            env=backend.get("env"),
+            env=resolve_backend_subprocess_env(backend),
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             text=True,

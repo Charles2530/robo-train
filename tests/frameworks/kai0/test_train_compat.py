@@ -4,6 +4,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from robo_train.frameworks.backend_env import resolve_backend_subprocess_env
+from robo_train.frameworks.kai0.plugin import Kai0FrameworkPlugin
 from robo_train.training.kai0_launcher import build_kai0_launch_spec
 from robo_train.training.kai0_profiles import build_experiment_config, load_kai0_train_profile
 
@@ -113,6 +115,20 @@ def test_kai0_backend_env_defaults_do_not_override_user_env(monkeypatch):
     assert "--batch_size=8" in spec.command
 
 
+def test_kai0_backend_runtime_env_preserves_user_secrets(monkeypatch):
+    monkeypatch.setenv("WANDB_API_KEY", "test-wandb-key")
+    profile = load_kai0_train_profile("pi05_put_the_books_back_table30v2_joint")
+    plugin = Kai0FrameworkPlugin()
+
+    dry_payload = plugin.build_launch_payload(profile, dry_run=True, num_train_steps=2)
+    runtime_payload = plugin.build_launch_payload(profile, dry_run=False, num_train_steps=2)
+
+    assert "WANDB_API_KEY" not in dry_payload["backend"]["env"]
+    assert dry_payload["backend"].get("runtime_env") is None
+    assert runtime_payload["backend"]["runtime_env"]["WANDB_API_KEY"] == "test-wandb-key"
+    assert resolve_backend_subprocess_env(runtime_payload["backend"])["WANDB_API_KEY"] == "test-wandb-key"
+
+
 def test_kai0_backend_library_order_matches_reference_shell(monkeypatch):
     monkeypatch.setenv("LD_LIBRARY_PATH", "/opt/conda/lib:/existing/lib:/usr/local/ffmpeg/lib")
     profile = load_kai0_train_profile("pi05_put_the_books_back_table30v2_joint")
@@ -210,6 +226,27 @@ def test_table30v2_shell_preserves_eight_card_defaults():
 
     assert payload["kai0_backend"]["env"]["CUDA_VISIBLE_DEVICES"] == "0,1,2,3,4,5,6,7"
     assert "--exp_name=run1-put-books-back-table30v2-joint-50000step-8card-bs256" in command
+    assert "--batch_size=256" in command
+    assert "--num_workers=32" in command
+
+
+def test_table30v2_shell_accepts_num_workers_env_override():
+    result = subprocess.run(
+        [
+            "bash",
+            "scripts/frameworks/kai0/train_put_the_books_back_table30v2_joint.sh",
+            "--dry-run",
+            "--json",
+        ],
+        cwd=Path.cwd(),
+        check=True,
+        text=True,
+        capture_output=True,
+        env={**os.environ, "CUDA_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7", "NUM_WORKERS": "32"},
+    )
+    payload = json.loads(result.stdout)
+    command = payload["kai0_backend"]["command"]
+
     assert "--batch_size=256" in command
     assert "--num_workers=32" in command
 

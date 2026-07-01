@@ -1,191 +1,135 @@
-# Universal Embodied Foundation Stack
+# Robo-Train
 
-`src` is a lightweight, runnable Python demo for a Protocol-first embodied data
-and training infra stack. It first normalizes data, robot embodiment, action
-semantics, coordinate frames, scenes, and training views, then uses a minimal
-NumPy policy to exercise the training path. Runtime serving, benchmark envs, and
-real-robot deployment are intentionally outside this MVP.
+Robo-Train 是一个面向具身智能模型训练的可扩展框架。它把数据协议、训练任务配置、模型/框架后端启动逻辑分开，使同一套数据基础设施可以服务 VLA、3D policy、world model / WAM 等不同训练家族。
 
-## What It Demonstrates
+当前重点是稳定 Kai0/OpenPI 兼容训练：本仓库负责配置、路径、脚本、dry-run、环境变量和训练 payload；真实 Kai0 训练后端仍由只读的 `/data/buaa/code/djy/kai0` 执行。这样可以保证迁移后的脚本行为和原 Kai0 `tools_charles` 训练逻辑保持一致，同时为后续扩展其它 VLA、3D 和 WM 框架保留统一入口。
 
-- Universal Embodied IR with `ActionSemantics`, `RobotCard`, `TaskCard`, `FrameGraph`, `SceneCard`, streams, and episodes.
-- StarVLA-style adapters that emit raw, model-agnostic IR rather than tokenized model inputs.
-- Validator and processor pipelines that prepare multimodal robot data for a policy.
-- `DatasetManifest` and `ExperimentConfig` contracts for multi-dataset, config-driven training.
-- `TrainingProfile` with `DataProfile`, `ModelFamily`, `LossProfile`, and `EmbodimentProfile` compatibility checks.
-- Family-specific `DataView` objects: `VLADataView`, `Policy3DDataView`, and `WorldModelDataView`.
-- Data infra utilities for `NormStats`, shard specs, and deterministic mixed episode loading.
-- `AlgorithmRegistry` and `TrainingArtifact` scaffolding for swappable algorithms and reproducible checkpoints.
-- `LossRegistry` with separate VLA, 3D policy, and world-model loss profiles.
-- A small `UnifiedEmbodiedPolicy.forward()` path for training-infra smoke tests.
+## 当前能力
 
-## Reference Frameworks
+- 统一训练入口：`python -m robo_train.cli.train --framework <name> <profile>`
+- 框架插件协议：`src/robo_train/frameworks/base.py`
+- Kai0 插件化适配：`src/robo_train/frameworks/kai0/`
+- Kai0 兼容 shell wrapper：`scripts/frameworks/kai0/`
+- 多层 YAML 配置：`configs/frameworks/<framework>/base/` + `configs/frameworks/<framework>/tasks/`
+- 通用数据 IR：`Episode`、`ActionSemantics`、`RobotCard`、`TaskCard`、`FrameGraph`、`SceneCard`
+- 通用数据处理：adapter、validator、processor、data view、mixed dataloader、norm stats
+- 训练家族抽象：`TrainingProfile`、`DataProfile`、`ModelFamily`、`LossProfile`、`EmbodimentProfile`
+- VLA / 3D / World Model 数据视图：`VLADataView`、`Policy3DDataView`、`WorldModelDataView`
 
-UEFS is not a copy of any one project. It borrows the engineering contracts that
-make several embodied-AI frameworks easier to extend, then reduces them to a
-small NumPy demo.
+## 已支持的训练框架
 
-| Reference | What UEFS borrows | Where it appears here | What UEFS intentionally does not copy |
+| 框架 | 状态 | 入口 | 说明 |
 | --- | --- | --- | --- |
-| [StarVLA](https://github.com/starVLA/starVLA) | Lego-like module boundaries, raw model-agnostic dataloader output, and a model API centered on `forward()` plus `predict_action()`. | `schema/`, `data/adapters/`, `data/processors/`, `training/models/policy.py`, `training/trainer.py`. | Real VLM/VLA backbones, tokenizer plumbing, distributed training, benchmark configs, and full model zoo logic. |
-| [DreamZero / World Action Model](https://dreamzero0.github.io/) | Future-prediction objectives can share the same data and training infra as action policies. | `WorldModelDataView` and `world_model` loss profile keep this training path visible. | Video diffusion, real future-frame generation, GPU inference, WebSocket/distributed inference, and zero-shot claims. |
-| [kai0 / chi0](https://github.com/OpenDriveLab/kai0) | Train-script compatibility, task prompts, image maps, action dimensions, joint/delta action choices, and original dataset/checkpoint path conventions. | `configs/frameworks/kai0/tasks/`, `src/robo_train/frameworks/kai0/{profile_schema,loader,converter,launcher,plugin}.py`, `src/robo_train/cli/train.py`, `scripts/frameworks/kai0/`. | Robot deployment, DAgger collection, policy server, and secrets from shell scripts. |
-| [LightX2V](https://github.com/ModelTC/LightX2V) | Practical repo ergonomics: top-level layered `configs/`, runnable scripts, quickstart-first README, and task-oriented command lines. | `configs/base/`, `configs/frameworks/kai0/tasks/`, `src/config/layered.py`, `src/scripts/`, `scripts/frameworks/kai0/`. | Image/video generation backends, acceleration kernels, model-format conversion, and GPU serving stack. |
-| [LeRobot](https://github.com/huggingface/lerobot) | Dataset/policy/training/deployment separation, reusable configs, and robotics dataset metadata. | `DatasetManifest`, `ExperimentConfig`, `data/adapters/`, `configs/`. | Hugging Face Hub integration, real robot drivers, real pretrained policies, and distributed training. |
-| [robomimic](https://robomimic.github.io/) | Config-driven imitation learning, algorithm abstraction, dataset splits, and reproducible experiment artifacts. | `ExperimentConfig`, `AlgorithmRegistry`, `TrainingArtifact`, `training/trainer.py`. | Real PyTorch algorithms, robosuite integration, and full HDF5 training pipelines. |
-| [ManiSkill](https://maniskill.readthedocs.io/) | Future benchmark adapters should stay outside data/training internals. | Deferred until eval infra is added. | GPU simulation, physics assets, task suites, and reinforcement-learning environments. |
-| [Isaac Lab](https://isaac-sim.github.io/IsaacLab/) | Future simulator integration should be an adapter layer, not training-core logic. | Deferred until eval/runtime infra is added. | Isaac Sim dependency, manager-based RL stack, physics simulation, and asset pipelines. |
-| [Diffusion Policy](https://github.com/real-stanford/diffusion_policy) | Sequence-action policies should register as training policies without changing data infra. | Future policy registry entry. | Real diffusion/flow model training and image backbone implementation. |
-| [OpenVLA](https://github.com/openvla/openvla) and [Octo](https://github.com/octo-models/octo) | Pretrained generalist VLA policy fine-tuning and checkpoint-oriented workflows. | `PolicyConfig.pretrained_checkpoint`, `freeze_backbone`, `EmbodimentAdapter`, `TrainingArtifact`. | Real VLM/VLA weights, tokenizers, model serving, and hardware-specific inference. |
-| [MimicGen](https://github.com/NVlabs/mimicgen) and [RoboCasa](https://github.com/robocasa/robocasa) | Generated demonstration provenance and task-family metadata. | `DatasetManifest.lineage`, `quality_flags`, adapter registry. | Demonstration generation, scene assets, kitchen benchmarks, and simulator rollouts. |
+| Kai0 / OpenPI JAX | 已支持 | `configs/frameworks/kai0/base/kai0_jax.yaml`、`scripts/frameworks/kai0/*.sh` | 当前主力训练路径。支持 Table30/Table30v2 任务、pi05 base checkpoint、JAX 后端、单卡/多卡脚本默认值。 |
+| Kai0 / OpenPI PyTorch | 已支持 | `configs/frameworks/kai0/base/kai0_torch.yaml`、`scripts/frameworks/kai0/train_pytorch.sh` | 保留 PyTorch 训练入口和 flatten/fold AWBC profile。 |
+| DreamZero / WAM | 仅预留 TODO | `src/robo_train/frameworks/dreamzero/`、`configs/frameworks/dreamzero/`、`scripts/frameworks/dreamzero/` | 只保留目录和 TODO，不注册 plugin，不提供可运行实现。 |
 
-The detailed file-by-file mapping lives in
-[`docs/framework_mapping.md`](docs/framework_mapping.md).
+统一 CLI 当前实际注册的 framework 只有 `kai0`：
 
-## What These Frameworks Have In Common
-
-All four references separate **data format**, **model internals**, **training
-loop**, **runtime**, and **evaluation/deployment evidence**. That separation is
-the main architectural lesson UEFS keeps.
-
-They also converge on a few practical principles:
-
-- **Stable protocol before model choice.** StarVLA's raw dict, kai0's deployment payloads, and UEFS's `Episode`/`EmbodiedBatch` all make data contracts explicit before choosing a backbone.
-- **Config and metadata are part of training.** LeRobot and robomimic show that datasets, splits, normalization stats, algorithms, and runtime horizons should be saved as structured experiment state.
-- **Layered configs beat script sprawl.** LightX2V-style `defaults` let a profile compose model, training, and task layers while keeping dataset and checkpoint paths explicit.
-- **Adapters unify data; DataView objects split training inputs.** VLA, 3D, and WM should not require three incompatible dataset stacks. UEFS converts sources to `Episode` first, then uses `VLADataView`, `Policy3DDataView`, or `WorldModelDataView`.
-- **LossProfile is the main training-family switch.** VLA action BC, 3D geometry-aware policy loss, and WM future-prediction loss live in separate loss modules.
-- **EmbodimentProfile handles robot-arm differences.** Franka, ALOHA, UR, and mobile manipulators should differ through robot/action/runtime profiles, not by duplicating the whole trainer.
-- **One policy surface, many model families.** Whether the internal policy is VLA, world-action, or state-only, the outside world wants a training call and an action prediction call.
-- **Action chunks are a deployment unit.** DreamZero, Diffusion Policy, and kai0 all care about chunked actions and smoothing; UEFS treats `[horizon, action_dim]` chunks as first-class outputs.
-- **Tasks and environments are adapters.** ManiSkill and Isaac Lab keep simulator details out of policy code; UEFS does the same with `envs/`.
-- **Deployment produces training evidence.** Rollouts, failures, recoveries, safety events, and stage progress are not logs for humans only; they are future alignment data.
-- **Configs and scripts matter.** LightX2V's layout is a reminder that a research framework is only useful when common runs are obvious and repeatable.
-
-## Training Differences By Model Family
-
-UEFS exposes one `UnifiedEmbodiedPolicy`, but real systems would train different
-model families differently. The demo keeps these differences visible through
-separate heads, metadata, and alignment hooks.
-
-| Model family | Typical inputs | Main training target | Extra losses or signals | Deployment behavior | UEFS representation |
-| --- | --- | --- | --- | --- | --- |
-| **VLA / OpenPi-style action policy** | RGB images, language instruction, proprioception, robot metadata. | Predict canonical robot actions, often with behavior cloning or flow/diffusion action losses. | Optional language-retention loss, action smoothness, safety/risk heads, stage progress. | Direct `predict_action()` returns an action chunk. | `MockVisionEncoder`, `MockLanguageEncoder`, `MockProprioEncoder`, `ActionHead`, `forward()` action loss. |
-| **DreamZero-style World Action Model** | Observation history plus task conditioning, often with video/world-model latents. | Jointly predict future world state/video latent and actions. The world target is not just an auxiliary decoration; it shapes the representation used for action. | Future latent/video reconstruction, action prediction, chunk consistency, latency/smoothing constraints. | Returns both action chunk and `predicted_future` summary. | `WorldActionHead` produces `future_latent` and action-conditioned latent from the same shared rollout. |
-| **kai0 / chi0-style robust manipulation policy** | Demonstrations plus future deployment rollouts, recovery data, and stage labels. | Improve action policy under distribution shift between training and deployment. | Deferred to runtime/alignment phase. | Not part of MVP. | Future alignment package. |
-| **Pure 3D or state-based policy** | Proprioception, low-dimensional state, point clouds, robot morphology; language may be optional. | Predict actions from geometric/state features rather than VLM-scale image-language features. | State/action normalization, morphology conditioning, smoothness and safety losses. | Same action API, usually cheaper inference and fewer visual dependencies. | `MockProprioEncoder`, `MorphologyEncoder`, optional/absent image streams via `modality_mask`. |
-| **Diffusion Policy-style sequence policy** | Image/state history plus language or task conditioning. | Learn action sequences with a denoising/flow objective rather than direct one-step regression. | Noise schedule, sequence consistency, action normalization. | Deferred to a future runtime phase. | `PolicyConfig` future registry entry. |
-| **Sim benchmark policy** | Simulator observations, task ids, reset/step rewards, success signals. | Train or evaluate against standardized task suites. | Success rate, rollout length, resets, environment-specific rewards. | Deferred to an eval phase. | Future benchmark adapters. |
-
-The common API is deliberate: swapping a real VLA, a real WAM, or a state-only
-controller should not require changing adapters, validators, runtime clients, or
-rollout logging. Only the internals of encoders/heads/trainers should change.
-
-## Architecture
-
-```text
-DatasetManifest + ExperimentConfig
-  -> Raw Data
-  -> Adapter (data/adapters/)
-  -> Universal Embodied IR (schema/)
-  -> Validator (data/validators/)
-  -> ProcessorPipeline (data/processors/)
-  -> TrainingProfile
-  -> DataView (VLADataView / Policy3DDataView / WorldModelDataView)
-  -> NormStats + MixedEpisodeDataLoader
-  -> AlgorithmRegistry (training/algorithm_registry.py)
-  -> LossRegistry + LossProfile
-  -> UnifiedEmbodiedPolicy (training/models/policy.py)
-  -> TrainingArtifact
+```bash
+PYTHONPATH=src python - <<'PY'
+from robo_train.frameworks import FRAMEWORK_REGISTRY
+print(FRAMEWORK_REGISTRY.names())
+PY
 ```
 
-## Quick Start
+## 已配置的真实训练数据集
+
+`datasets` 当前是指向 `/data/buaa/vla_dataset/processed/` 的软链接。Kai0 profiles 使用配置里的相对路径，运行时由 launcher 解析到本仓库路径。
+
+| 数据集 / 任务 | 路径 | Profile | 动作/标签 |
+| --- | --- | --- | --- |
+| RoboChallenge Table30 arrange flowers | `datasets/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers` | `pi05_arrange_flowers`、`pi05_arrange_flowers_sparse`、`pi05_arrange_flowers_encode` | ARX5 单臂，EEF action，7D。 |
+| RoboChallenge Table30v2 arrange flowers | `datasets/RoboChallenge_Table30v2_v2.1_pyav_g2/arrange_flowers` | `pi05_arrange_flowers_table30v2` | ARX5 单臂，EEF quaternion action，8D。 |
+| RoboChallenge Table30v2 put the books back | `datasets/RoboChallenge_Table30v2_v2.1_pyav_g2/put_the_books_back` | `pi05_put_the_books_back_table30v2` | ALOHA 双臂，EEF quaternion action，16D。 |
+| RoboChallenge Table30v2 put the books back joint | 同上 | `pi05_put_the_books_back_table30v2_joint` | ALOHA 双臂，next-state joint action，14D。 |
+| RoboChallenge Table30v2 put the books back joint delta | 同上 | `pi05_put_the_books_back_table30v2_joint_delta` | ALOHA 双臂，delta joint action，14D。 |
+| xiaoyu Task A flatten/fold AWBC | `datasets/xiaoyu_Task_A/advantage` | `pi05_flatten_fold_awbc_torch` | AgileX 双臂，joint action，14D，PyTorch profile。 |
+
+## 数据格式支持
+
+| 数据格式 / Adapter | 状态 | 代码位置 | 说明 |
+| --- | --- | --- | --- |
+| Synthetic | 已支持 | `src/robo_train/data/adapters/synthetic_adapter.py` | 用于本仓库的单元测试和本地 demo。 |
+| Kai0 / LeRobot v3 profile path | 已用于真实训练 | `configs/frameworks/kai0/tasks/*.yaml` | 真实训练直接交给 Kai0/OpenPI 后端读取，不在本仓库重复实现完整 LeRobot loader。 |
+| HDF5 | TODO stub | `src/robo_train/data/adapters/hdf5_adapter.py` | 已有 adapter 类和注册名，尚未实现真实解析。 |
+| LeRobot | TODO stub | `src/robo_train/data/adapters/lerobot_adapter.py` | 已有 adapter 类和注册名，尚未实现通用 IR 转换。 |
+| RLDS / OXE | TODO stub | `src/robo_train/data/adapters/rlds_oxe_adapter.py` | 已有 adapter 类和注册名，尚未实现真实解析。 |
+
+## 常用命令
+
+安装和测试：
 
 ```bash
 pip install -e .
 pytest -q
-python -m robo_train.scripts.run_local_demo
-python -m robo_train.scripts.generate_demo_data --output ./demo_data --episodes 3
-python -m robo_train.cli.train --framework kai0 pi05_arrange_flowers --dry-run --json
-bash scripts/frameworks/kai0/train_arrange_flowers_table30v2.sh --dry-run
 ```
 
-## Directory Structure
+Kai0 dry-run：
+
+```bash
+python -m robo_train.cli.train --framework kai0 pi05_put_the_books_back_table30v2_joint --dry-run --json
+```
+
+Table30v2 put-books-back joint 单卡训练：
+
+```bash
+CUDA_VISIBLE_DEVICES=0 bash scripts/frameworks/kai0/train_put_the_books_back_table30v2_joint.sh
+```
+
+兼容错误拼写的单卡环境变量：
+
+```bash
+CUDA_VISIBEL_DEVICES=0 bash scripts/frameworks/kai0/train_put_the_books_back_table30v2_joint.sh
+```
+
+两卡训练：
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1 bash scripts/frameworks/kai0/train_put_the_books_back_table30v2_joint.sh
+```
+
+8 卡训练时，Table30v2 脚本默认使用 `batch_size=256`、`num_workers=32`：
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/frameworks/kai0/train_put_the_books_back_table30v2_joint.sh
+```
+
+也可以显式传环境变量或 CLI 参数覆盖 dataloader workers：
+
+```bash
+NUM_WORKERS=32 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash scripts/frameworks/kai0/train_put_the_books_back_table30v2_joint.sh
+```
+
+## 目录结构
 
 ```text
 configs/
-  base/model/              # reusable model layers
-  frameworks/kai0/base/    # Kai0 launcher and training defaults
-  frameworks/kai0/tasks/   # Kai0-compatible task profiles
-docs/
-  architecture.md
-  framework_mapping.md
-src/
-  robo_train/
-    cli/                   # unified framework CLI
-    config/                # layered YAML loader
-    frameworks/            # framework plugin protocol and adapters
-      kai0/                # Kai0 plugin schema, loader, converter, launcher
-    schema/                # cross-layer Universal Embodied IR
-    data/                  # adapters, validators, processors, storage, dataloader
-      views/               # VLA, 3D, and WM model-family views
-    training/              # registry, artifacts, mock trainer, losses, minimal policy
-    scripts/               # python -m demo entrypoints
-scripts/frameworks/kai0/         # Kai0-compatible shell wrappers
+  base/model/                    # 可复用模型层配置
+  frameworks/kai0/base/          # Kai0 launcher 和训练默认值
+  frameworks/kai0/tasks/         # Kai0 任务 profiles
+  frameworks/dreamzero/          # DreamZero TODO 占位
+scripts/
+  frameworks/kai0/               # Kai0 兼容训练脚本
+  frameworks/dreamzero/          # DreamZero TODO 占位
+src/robo_train/
+  cli/                           # 统一训练 CLI
+  config/                        # layered YAML loader
+  data/                          # adapters, validators, processors, views, dataloader
+  frameworks/                    # framework plugin 协议和实现
+    kai0/                        # Kai0 plugin
+    dreamzero/                   # TODO 占位
+  schema/                        # 通用具身数据和实验配置 schema
+  training/                      # 训练抽象、loss、artifact、mock policy
 tests/
+  shared/                        # 共享 data/schema/training 测试
+  frameworks/kai0/               # Kai0 专属兼容测试
 ```
 
-## Core Design
+## 扩展入口
 
-The IR is Protocol-first: it separates raw actions from canonical actions,
-keeps scene and frame metadata beside streams, and avoids collapsing every
-modality into one universal tensor. External datasets
-often use vendor-specific control commands while policies need a stable target
-space. `ActionSemantics` names that target space: representation, control mode,
-frame, fields, units, fps, horizon, and dimensionality.
+新增数据集或新增训练框架时，不要把逻辑写死在 CLI 里。请参考 [adapt.md](adapt.md)：
 
-`DatasetManifest` and `ExperimentConfig` are the compatibility layer for real
-training. A future HDF5, LeRobot, RLDS/OXE, MimicGen, or RoboCasa adapter can
-describe its source and splits in one place, while a trainer can select policy
-type and loss family without editing scripts.
-
-Kai0-compatible training profiles use a LightX2V-style layered config layout:
-`configs/base/model/*.yaml` defines shared model shape,
-`configs/frameworks/kai0/base/*.yaml` defines launcher and training defaults, and
-`configs/frameworks/kai0/tasks/*.yaml` only overrides task data, image mapping,
-prompt, action semantics, and run names. The local profiles point data and
-checkpoints at this repository (`datasets/` and `checkpoints/kai0/...`) while the
-launcher calls a configured, read-only Kai0/OpenPI source checkout for the
-heavy trainer.
-
-`TrainingProfile` is the clearer split between model families. It validates
-that `DataProfile`, `ModelFamily`, `LossProfile`, and `EmbodimentProfile` match:
-VLA uses image-language-state batches and `vla_bc`; 3D policies use
-point/state geometry and `policy_3d_bc`; WM uses context/action/future targets
-and `world_model`.
-
-`RobotCard` and `ActionSemantics` are first-class objects so the same policy can
-reason about embodiment differences instead of silently assuming one robot and
-one fixed 7D action shape. The demo uses `eef_delta_pose_gripper`, but the
-schema supports joint, base, and vendor-specific representations.
-
-`AlgorithmRegistry` keeps model families behind names. Today it constructs the
-NumPy `UnifiedEmbodiedPolicy`; tomorrow it can register `diffusion_policy`,
-`openvla_finetune`, `octo_finetune`, `robomimic_bc`, or a state-only controller
-without changing the data or runtime contracts.
-
-The minimal policy lives under `training/models/` because the MVP only needs a
-model surface to validate training infra. Heavier VLA, WAM, diffusion, runtime,
-and benchmark code can be added later without changing the data protocol.
-
-## Current Non-Goals
-
-- No fully managed long-running large model training campaign.
-- No runtime server or real robot connection.
-- No real HDF5, LeRobot, or RLDS/OXE parsing.
-- No real video generation or diffusion.
-- No DAgger loop, policy server, or simulator backend. Kai0/OpenPI training
-  can be launched through the configured compatibility backend.
-
-The interfaces are intentionally shaped so those pieces can be added later
-without changing the data or training contracts.
+- 新增数据集：优先改 `src/robo_train/data/`、`configs/frameworks/<framework>/tasks/` 和 `tests/shared/`。
+- 新增训练框架：新增 `src/robo_train/frameworks/<name>/`、`configs/frameworks/<name>/`、`scripts/frameworks/<name>/` 和 `tests/frameworks/<name>/`。
+- 统一 CLI `src/robo_train/cli/train.py` 应只通过 `FRAMEWORK_REGISTRY` 调用 plugin，不应该出现具体框架的分支判断。

@@ -96,18 +96,22 @@ append_table30v2_card_defaults() {
 
   local device_count
   device_count="$(visible_cuda_device_count)"
-  local run_name="${multi_run_name}"
-  local batch_size="256"
-  local num_workers="32"
+  local default_run_name="${multi_run_name}"
+  local default_batch_size="256"
+  local default_num_workers="32"
   if is_single_cuda_device; then
-    run_name="${single_run_name}"
-    batch_size="8"
-    num_workers="2"
+    default_run_name="${single_run_name}"
+    default_batch_size="8"
+    default_num_workers="2"
   elif [[ "${device_count}" != "8" ]]; then
-    batch_size="$((device_count * 32))"
-    run_name="${multi_run_name/8card-bs256/${device_count}card-bs${batch_size}}"
-    num_workers="8"
+    default_batch_size="$((device_count * 32))"
+    default_run_name="${multi_run_name/8card-bs256/${device_count}card-bs${default_batch_size}}"
+    default_num_workers="8"
   fi
+
+  local run_name="${RUN_NAME:-${default_run_name}}"
+  local batch_size="${BATCH_SIZE:-${default_batch_size}}"
+  local num_workers="${NUM_WORKERS:-${default_num_workers}}"
 
   TABLE30V2_DEFAULT_ARGS=()
   if ! has_cli_arg "--exp_name" "$@" && ! has_cli_arg "--exp-name" "$@"; then

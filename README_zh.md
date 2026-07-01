@@ -22,9 +22,9 @@ UEFS 不是复刻任何一个项目。它提取了多个具身智能框架里值
 | 参考框架 | UEFS 借鉴的部分 | 在本项目中的位置 | UEFS 没有照搬的部分 |
 | --- | --- | --- | --- |
 | [StarVLA](https://github.com/starVLA/starVLA) | Lego-like 模块边界、raw model-agnostic dataloader 输出、以 `forward()` 和 `predict_action()` 为核心的模型 API。 | `schema/`、`data/adapters/`、`data/processors/`、`training/models/policy.py`、`training/trainer.py`。 | 真实 VLM/VLA backbone、tokenizer 细节、分布式训练、benchmark 配置和完整 model zoo。 |
-| [DreamZero / World Action Model](https://dreamzero0.github.io/) | future-prediction objective 可以和 action policy 共用同一套 data/training infra。 | `WorldModelDataView` 和 `world_model` loss profile 保留这条训练路径。 | 视频扩散、真实未来帧生成、GPU 推理、WebSocket/分布式推理和 zero-shot 能力声明。 |
+| [DreamZero / World Action Model](https://dreamzero0.github.io/) | future-prediction objective 可以和 action policy 共用同一套 data/training infra。 | `WorldModelDataView`、`world_model` loss profile，以及 `configs/frameworks/dreamzero/` 和 `src/robo_train/frameworks/dreamzero/` 下的 TODO 占位保留这条未来路径。 | 视频扩散、真实未来帧生成、GPU 推理、WebSocket/分布式推理和 zero-shot 能力声明。 |
 | [kai0 / chi0](https://github.com/OpenDriveLab/kai0) | 训练脚本兼容、任务 prompt、图像字段映射、action 维度、joint/delta action 选择，以及原始数据和 checkpoint 路径约定。 | `configs/frameworks/kai0/tasks/`、`src/robo_train/frameworks/kai0/{profile_schema,loader,converter,launcher,plugin}.py`、`src/robo_train/cli/train.py`、`scripts/frameworks/kai0/`。 | 机器人部署、DAgger 采集、policy server，以及 shell 脚本里的 secret。 |
-| [LightX2V](https://github.com/ModelTC/LightX2V) | 实用 repo 组织方式：顶层多层 `configs/`、可运行 scripts、README 优先 quickstart、任务式命令行入口。 | `configs/base/`、`configs/frameworks/kai0/tasks/`、`src/config/layered.py`、`src/scripts/`、`scripts/frameworks/kai0/`。 | 图像/视频生成后端、加速 kernel、模型格式转换和 GPU serving stack。 |
+| [LightX2V](https://github.com/ModelTC/LightX2V) | 实用 repo 组织方式：顶层多层 `configs/`、可运行 scripts、README 优先 quickstart、任务式命令行入口。 | `configs/base/`、`configs/frameworks/kai0/tasks/`、`src/robo_train/config/layered.py`、`src/robo_train/scripts/`、`scripts/frameworks/kai0/`。 | 图像/视频生成后端、加速 kernel、模型格式转换和 GPU serving stack。 |
 | [LeRobot](https://github.com/huggingface/lerobot) | dataset / policy / training / deployment 分层、可复用配置，以及机器人数据集 metadata。 | `DatasetManifest`、`ExperimentConfig`、`data/adapters/`、`configs/`。 | Hugging Face Hub 集成、真实机器人驱动、真实预训练 policy 和分布式训练。 |
 | [robomimic](https://robomimic.github.io/) | config-driven imitation learning、算法抽象、dataset split 和可复现实验 artifact。 | `ExperimentConfig`、`AlgorithmRegistry`、`TrainingArtifact`、`training/trainer.py`。 | 真实 PyTorch 算法、robosuite 集成和完整 HDF5 训练 pipeline。 |
 | [ManiSkill](https://maniskill.readthedocs.io/) | 未来 benchmark adapter 应该在 eval 层，不侵入 data/training 主干。 | 暂缓到 eval infra 阶段。 | GPU 仿真、物理资产、完整任务套件和 RL 环境。 |
@@ -101,8 +101,10 @@ bash scripts/frameworks/kai0/train_arrange_flowers_table30v2.sh --dry-run
 
 ```text
 configs/
-  base/                    # 可复用 model/train 层
-  experiments/kai0/         # Kai0 兼容任务 profiles
+  base/model/              # 可复用 model 层
+  frameworks/dreamzero/    # DreamZero/WAM TODO 占位
+  frameworks/kai0/base/    # Kai0 launcher 和训练默认值
+  frameworks/kai0/tasks/   # Kai0 兼容任务 profiles
 docs/
   architecture.md
   framework_mapping.md
@@ -111,12 +113,14 @@ src/
     cli/                   # 统一 framework CLI
     config/                # layered YAML loader
     frameworks/            # framework plugin 协议和适配器
+      dreamzero/           # DreamZero TODO 占位
       kai0/                # Kai0 plugin schema、loader、converter、launcher
     schema/                # 跨 data/model/runtime 共享的 Universal Embodied IR
     data/                  # adapters, validators, processors, storage, dataloader
       views/               # VLA, 3D, WM 三类训练视图
     training/              # registry, artifacts, mock trainer, losses, minimal policy
     scripts/               # python -m demo 入口
+scripts/frameworks/dreamzero/    # DreamZero TODO 占位
 scripts/frameworks/kai0/         # Kai0 兼容 shell wrappers
 tests/
 ```
@@ -131,6 +135,11 @@ Kai0 兼容训练 profile 采用 LightX2V 风格的多层配置：
 `configs/base/model/*.yaml` 定义共享模型形态，
 `configs/frameworks/kai0/base/*.yaml` 定义 launcher 和训练默认值，
 `configs/frameworks/kai0/tasks/*.yaml` 只覆盖任务数据、图像映射、prompt、动作语义和 run name。当前本地 profile 指向本仓库的 `datasets/` 和 `checkpoints/kai0/...`，真实重训练由配置中的只读 Kai0/OpenPI 源码后端执行。
+
+DreamZero/WAM 目前只预留目录：`configs/frameworks/dreamzero/`、
+`src/robo_train/frameworks/dreamzero/` 和 `scripts/frameworks/dreamzero/`
+里保留 TODO 占位。之后接真实 backend 时，再按同一个 plugin 协议实现，并解析到
+`TrainingProfile.default_world_model()` 和 `WorldModelDataView`。
 
 `TrainingProfile` 是更清楚的模型家族分流点。它要求 `DataProfile`、`ModelFamily`、`LossProfile` 和 `EmbodimentProfile` 对齐：VLA 使用图像-语言-state batch 和 `vla_bc`；3D policy 使用 point/state geometry 和 `policy_3d_bc`；WM 使用 context/action/future target 和 `world_model`。
 

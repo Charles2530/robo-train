@@ -13,6 +13,7 @@ from pathlib import Path
 import subprocess
 from typing import Mapping
 
+from robo_train.frameworks.backend_env import summarize_backend_env
 from robo_train.frameworks.kai0.profile_schema import Kai0TrainProfile
 
 
@@ -47,23 +48,7 @@ class Kai0LaunchSpec:
         return {
             "cwd": str(self.cwd),
             "command": self.command,
-            "env": {
-                key: self.env[key]
-                for key in sorted(
-                    {
-                        "CUDA_VISIBLE_DEVICES",
-                        "FFMPEG_HOME",
-                        "JAX_PLATFORMS",
-                        "KAI0_ROOT",
-                        "LD_LIBRARY_PATH",
-                        "OPENPI_VIDEO_BACKEND",
-                        "PYTHONPATH",
-                        "TASK_A_ROOT",
-                        "XLA_PYTHON_CLIENT_MEM_FRACTION",
-                    }
-                )
-                if key in self.env
-            },
+            "env": summarize_backend_env(self.env),
             "log_path": str(self.log_path),
             "dataset_path": str(self.dataset_path),
             "checkpoint_path": str(self.checkpoint_path),

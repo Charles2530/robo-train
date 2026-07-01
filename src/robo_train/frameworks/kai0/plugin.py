@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from robo_train.frameworks.backend_env import attach_runtime_env
 from robo_train.frameworks.kai0.converter import build_experiment_config, build_launch_payload
 from robo_train.frameworks.kai0.launcher import build_kai0_launch_spec
 from robo_train.frameworks.kai0.loader import list_kai0_train_profiles, load_kai0_train_profile
@@ -72,6 +73,8 @@ class Kai0FrameworkPlugin:
             source_root=kwargs.get("source_root"),
         )
         backend_payload = spec.as_payload()
+        if not dry_run:
+            attach_runtime_env(backend_payload, spec.env)
         payload["backend"] = backend_payload
         payload["kai0_backend"] = backend_payload
         return payload

@@ -1,5 +1,7 @@
 # Training Family Clarity Design
 
+> **Archived/Stale:** This design predates the `robo_train` package rename and plugin migration. It is kept only for historical context; use the current `src/robo_train/`, `configs/frameworks/`, and `scripts/frameworks/` layout as the source of truth.
+
 ## Goal
 
 Clarify UEFS training architecture so VLA, 3D policy, and world-model/video-style training paths share the same Universal Episode IR while using distinct data views, loss profiles, and embodiment/runtime profiles.

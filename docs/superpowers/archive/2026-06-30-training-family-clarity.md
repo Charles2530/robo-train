@@ -1,5 +1,7 @@
 # Training Family Clarity Implementation Plan
 
+> **Archived/Stale:** This plan predates the `robo_train` package rename and plugin migration. It is kept only for historical context; use the current `src/robo_train/`, `configs/frameworks/`, and `scripts/frameworks/` layout as the source of truth.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make UEFS clearly distinguish VLA, 3D policy, and world-model training paths through data views, loss profiles, and embodiment profiles.

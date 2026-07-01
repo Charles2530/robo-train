@@ -1,5 +1,7 @@
 # LightX2V-Style Infra Slimdown Implementation Plan
 
+> **Archived/Stale:** This plan predates the `robo_train` package rename and plugin migration. It is kept only for historical context; use the current `src/robo_train/`, `configs/frameworks/`, and `scripts/frameworks/` layout as the source of truth.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Simplify the repo around data infra and training infra, following the LightX2V-style split of configs, scripts, data utilities, and training utilities.
