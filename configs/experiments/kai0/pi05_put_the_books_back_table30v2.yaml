@@ -10,7 +10,7 @@ profile:
   description: Kai0 Table30v2 put-books-back EEF action profile.
 
 data:
-  dataset_path: /data/buaa/code/djy/kai0/processed/RoboChallenge_Table30v2_v2.1_pyav_g2/put_the_books_back
+  dataset_path: data/RoboChallenge_Table30v2_v2.1_pyav_g2/put_the_books_back
   required_subdir: videos
   default_prompt: Place the books back onto the bookshelf.
   image_map:

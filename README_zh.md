@@ -23,8 +23,8 @@ UEFS 不是复刻任何一个项目。它提取了多个具身智能框架里值
 | --- | --- | --- | --- |
 | [StarVLA](https://github.com/starVLA/starVLA) | Lego-like 模块边界、raw model-agnostic dataloader 输出、以 `forward()` 和 `predict_action()` 为核心的模型 API。 | `schema/`、`data/adapters/`、`data/processors/`、`training/models/policy.py`、`training/trainer.py`。 | 真实 VLM/VLA backbone、tokenizer 细节、分布式训练、benchmark 配置和完整 model zoo。 |
 | [DreamZero / World Action Model](https://dreamzero0.github.io/) | future-prediction objective 可以和 action policy 共用同一套 data/training infra。 | `WorldModelDataView` 和 `world_model` loss profile 保留这条训练路径。 | 视频扩散、真实未来帧生成、GPU 推理、WebSocket/分布式推理和 zero-shot 能力声明。 |
-| [kai0 / chi0](https://github.com/OpenDriveLab/kai0) | 训练脚本兼容、任务 prompt、图像字段映射、action 维度、joint/delta action 选择，以及原始数据和 checkpoint 路径约定。 | `configs/experiments/kai0/`、`src/training/kai0_profiles.py`、`src/scripts/kai0_train.py`、`tools_charles/train/`。 | OpenPI/JAX/PyTorch 重训练内部、机器人部署、DAgger 采集，以及 shell 脚本里的 secret。 |
-| [LightX2V](https://github.com/ModelTC/LightX2V) | 实用 repo 组织方式：顶层多层 `configs/`、可运行 scripts、README 优先 quickstart、任务式命令行入口。 | `configs/base/`、`configs/experiments/kai0/`、`src/config/layered.py`、`src/scripts/`、`tools_charles/train/`。 | 图像/视频生成后端、加速 kernel、模型格式转换和 GPU serving stack。 |
+| [kai0 / chi0](https://github.com/OpenDriveLab/kai0) | 训练脚本兼容、任务 prompt、图像字段映射、action 维度、joint/delta action 选择，以及原始数据和 checkpoint 路径约定。 | `configs/experiments/kai0/`、`src/training/kai0_profiles.py`、`src/training/kai0_launcher.py`、`src/scripts/kai0_train.py`、`scripts/train/kai0/`。 | 机器人部署、DAgger 采集、policy server，以及 shell 脚本里的 secret。 |
+| [LightX2V](https://github.com/ModelTC/LightX2V) | 实用 repo 组织方式：顶层多层 `configs/`、可运行 scripts、README 优先 quickstart、任务式命令行入口。 | `configs/base/`、`configs/experiments/kai0/`、`src/config/layered.py`、`src/scripts/`、`scripts/train/kai0/`。 | 图像/视频生成后端、加速 kernel、模型格式转换和 GPU serving stack。 |
 | [LeRobot](https://github.com/huggingface/lerobot) | dataset / policy / training / deployment 分层、可复用配置，以及机器人数据集 metadata。 | `DatasetManifest`、`ExperimentConfig`、`data/adapters/`、`configs/`。 | Hugging Face Hub 集成、真实机器人驱动、真实预训练 policy 和分布式训练。 |
 | [robomimic](https://robomimic.github.io/) | config-driven imitation learning、算法抽象、dataset split 和可复现实验 artifact。 | `ExperimentConfig`、`AlgorithmRegistry`、`TrainingArtifact`、`training/trainer.py`。 | 真实 PyTorch 算法、robosuite 集成和完整 HDF5 训练 pipeline。 |
 | [ManiSkill](https://maniskill.readthedocs.io/) | 未来 benchmark adapter 应该在 eval 层，不侵入 data/training 主干。 | 暂缓到 eval infra 阶段。 | GPU 仿真、物理资产、完整任务套件和 RL 环境。 |
@@ -94,7 +94,7 @@ pytest -q
 python -m src.scripts.run_local_demo
 python -m src.scripts.generate_demo_data --output ./demo_data --episodes 3
 python -m src.scripts.kai0_train pi05_arrange_flowers --dry-run --json
-bash tools_charles/train/train_arrange_flowers_table30v2.sh --dry-run
+bash scripts/train/kai0/train_arrange_flowers_table30v2.sh --dry-run
 ```
 
 ## 目录结构
@@ -113,7 +113,7 @@ src/
     views/                 # VLA, 3D, WM 三类训练视图
   training/                # registry, artifacts, mock trainer, losses, minimal policy
   scripts/                 # python -m demo 入口
-tools_charles/train/        # Kai0 兼容 shell wrappers
+scripts/train/kai0/         # Kai0 兼容 shell wrappers
 tests/
 ```
 
@@ -126,7 +126,7 @@ IR 是 Protocol-first 的：它明确区分 raw actions 和 canonical actions，
 Kai0 兼容训练 profile 采用 LightX2V 风格的多层配置：
 `configs/base/model/*.yaml` 定义共享模型形态，
 `configs/base/train/*.yaml` 定义 launcher 和训练默认值，
-`configs/experiments/kai0/*.yaml` 只覆盖任务数据、图像映射、prompt、动作语义和 run name。原始 Kai0 的数据路径和 checkpoint 路径会作为绝对路径保留在 profile 里；本地项目不会 import 或依赖一个 checkout 出来的 `kai0/` 文件夹。
+`configs/experiments/kai0/*.yaml` 只覆盖任务数据、图像映射、prompt、动作语义和 run name。当前本地 profile 指向本仓库的 `data/` 和 `checkpoints/kai0/...`，真实重训练由配置中的只读 Kai0/OpenPI 源码后端执行。
 
 `TrainingProfile` 是更清楚的模型家族分流点。它要求 `DataProfile`、`ModelFamily`、`LossProfile` 和 `EmbodimentProfile` 对齐：VLA 使用图像-语言-state batch 和 `vla_bc`；3D policy 使用 point/state geometry 和 `policy_3d_bc`；WM 使用 context/action/future target 和 `world_model`。
 
@@ -138,10 +138,10 @@ Kai0 兼容训练 profile 采用 LightX2V 风格的多层配置：
 
 ## 当前 Demo 不做什么
 
-- 不训练真实大模型。
+- 不负责完整、长期的大模型训练 campaign。
 - 不做 runtime server 或真实机器人连接。
 - 不实现真实 HDF5、LeRobot 或 RLDS/OXE 读取。
 - 不做真实视频生成或 diffusion。
-- 不做真实 OpenPI/Kai0 后端执行、DAgger 优化循环、policy server 或仿真后端。
+- 不做 DAgger 优化循环、policy server 或仿真后端；Kai0/OpenPI 训练可以通过兼容后端启动。
 
 这些接口保留下来，是为了未来替换真实后端时不需要改动 data 和 training 的外部契约。

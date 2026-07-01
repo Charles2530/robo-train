@@ -10,6 +10,7 @@ from typing import Any
 from src.data.adapters.synthetic_adapter import SyntheticAdapter
 from src.data.processors.pipeline import ProcessorPipeline
 from src.training.algorithm_registry import build_policy_from_config
+from src.training.kai0_launcher import build_kai0_launch_spec, run_kai0_launch
 from src.training.kai0_profiles import Kai0TrainProfile, build_experiment_config, build_launch_payload, load_kai0_train_profile
 from src.training.trainer import MockTrainer
 
@@ -31,6 +32,27 @@ def main(argv: list[str] | None = None) -> None:
     if args.encode_variant:
         payload["encode_variant"] = args.encode_variant
 
+    if args.backend == "kai0":
+        encode_variant = args.encode_variant
+        if encode_variant is None and profile.script_name == "train_arrange_flowers_encode.sh":
+            encode_variant = "ffmpeg_gop30"
+        spec = build_kai0_launch_spec(
+            profile,
+            exp_name=args.exp_name,
+            batch_size=args.batch_size,
+            num_train_steps=args.num_train_steps,
+            num_workers=args.num_workers,
+            encode_variant=encode_variant,
+            source_root=args.kai0_source_root,
+        )
+        payload["kai0_backend"] = spec.as_payload()
+        if args.dry_run:
+            _print_payload(payload, as_json=args.as_json)
+            return
+        if spec.preflight_warnings:
+            raise SystemExit("Kai0 preflight failed:\n- " + "\n- ".join(spec.preflight_warnings))
+        raise SystemExit(run_kai0_launch(spec))
+
     if args.dry_run:
         _print_payload(payload, as_json=args.as_json)
         return
@@ -50,7 +72,9 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Kai0-compatible training profile launcher")
     parser.add_argument("profile", help="Kai0 config name, profile file stem, or train_*.sh script name")
     parser.add_argument("--dry-run", action="store_true", help="Resolve and print the local train payload")
+    parser.add_argument("--backend", choices=["kai0", "smoke"], default="kai0", help="Training backend to execute")
     parser.add_argument("--json", dest="as_json", action="store_true", help="Print machine-readable JSON")
+    parser.add_argument("--kai0-source-root", default=None, help="Read-only Kai0 source checkout used as backend")
     parser.add_argument("--exp_name", "--exp-name", dest="exp_name")
     parser.add_argument("--batch_size", "--batch-size", dest="batch_size", type=int)
     parser.add_argument("--num_train_steps", "--num-train-steps", dest="num_train_steps", type=int)
@@ -121,6 +145,13 @@ def _print_payload(payload: dict[str, Any], *, as_json: bool) -> None:
     print(f"- dataset: {payload['checks']['dataset_path']}")
     print(f"- checkpoint: {payload['checks']['checkpoint']}")
     print(f"- launcher: {payload['launcher']['type']} {payload['launcher']['command']}")
+    if "kai0_backend" in payload:
+        backend = payload["kai0_backend"]
+        print(f"- backend cwd: {backend['cwd']}")
+        print(f"- backend command: {' '.join(backend['command'])}")
+        print(f"- backend log: {backend['log_path']}")
+        for warning in backend.get("preflight_warnings", []):
+            print(f"- warning: {warning}")
     if "smoke_summary" in payload:
         print(f"- smoke loss: {payload['smoke_summary']['loss']:.6f}")
 

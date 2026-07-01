@@ -2,6 +2,11 @@ launcher:
   type: torchrun
   command: scripts/train_pytorch.py
   nproc_per_node: 8
+  source_root: /data/buaa/code/djy/kai0
+  python_bin: .venv/bin/python
+  torchrun_bin: .venv/bin/torchrun
+  fallback_python_bins:
+    - /opt/conda/bin/python
 
 train:
   algorithm: kai0_openpi_torch_compat
@@ -17,7 +22,10 @@ train:
   wandb_enabled: false
 
 checkpoint:
-  params_path: /data/perception_datas0/zfj/kai0/checkpoints/pi05_base_pytorch
+  params_path: checkpoints/kai0/kai0-base/pi05_base_pytorch
 
 env:
+  CUDA_VISIBLE_DEVICES: 0,1,2,3,4,5,6,7
+  FFMPEG_HOME: /usr/local/ffmpeg
+  CONDA_LIB_PATH: /opt/conda/lib
   OPENPI_VIDEO_BACKEND: torchcodec

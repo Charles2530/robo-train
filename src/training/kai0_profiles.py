@@ -32,6 +32,10 @@ class Kai0LauncherConfig(BaseModel):
     type: str = "jax"
     command: str = "scripts/train.py"
     nproc_per_node: int | None = None
+    source_root: str | None = None
+    python_bin: str | None = None
+    torchrun_bin: str | None = None
+    fallback_python_bins: list[str] = Field(default_factory=list)
 
 
 class Kai0ModelConfig(BaseModel):

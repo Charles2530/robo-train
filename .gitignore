@@ -11,3 +11,6 @@ __pycache__/
 demo_data/
 rollout_logs/
 *.egg-info/
+checkpoints/
+data
+logs/

@@ -3,6 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from src.training.kai0_launcher import build_kai0_launch_spec
 from src.training.kai0_profiles import build_experiment_config, load_kai0_train_profile
 
 
@@ -10,8 +11,8 @@ def test_kai0_layered_profile_preserves_dataset_and_checkpoint_paths():
     profile = load_kai0_train_profile("pi05_put_the_books_back_table30v2_joint_delta")
 
     assert profile.config_name == "pi05_put_the_books_back_table30v2_joint_delta"
-    assert profile.data.dataset_path == "/data/buaa/code/djy/kai0/processed/RoboChallenge_Table30v2_v2.1_pyav_g2/put_the_books_back"
-    assert profile.checkpoint.params_path == "/data/buaa/code/djy/kai0/checkpoints/pi05_base/params"
+    assert profile.data.dataset_path == "data/RoboChallenge_Table30v2_v2.1_pyav_g2/put_the_books_back"
+    assert profile.checkpoint.params_path == "checkpoints/kai0/kai0-base/pi05_base/params"
     assert profile.data.image_map == {
         "top_head": "global_image",
         "hand_left": "left_wrist_image",
@@ -66,9 +67,14 @@ def test_kai0_train_cli_dry_run_does_not_need_kai0_folder():
     payload = json.loads(result.stdout)
 
     assert payload["profile"]["config_name"] == "pi05_arrange_flowers"
-    assert payload["profile"]["data"]["dataset_path"] == "/data/buaa/code/djy/kai0/processed/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers"
+    assert payload["profile"]["data"]["dataset_path"] == "data/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers"
     assert payload["experiment"]["experiment_id"] == "dry-run-arrange"
     assert payload["experiment"]["trainer"]["kwargs"]["num_train_steps"] == 3
+    assert payload["kai0_backend"]["command"][1] == "scripts/train.py"
+    assert "--data.repo-id=" in " ".join(payload["kai0_backend"]["command"])
+    assert "robo-train/data/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers" in " ".join(
+        payload["kai0_backend"]["command"]
+    )
 
 
 def test_top_level_kai0_compatible_train_scripts_call_local_launcher():
@@ -83,10 +89,21 @@ def test_top_level_kai0_compatible_train_scripts_call_local_launcher():
         "train_pytorch.sh",
     }
 
-    scripts_dir = Path("scripts/train")
+    scripts_dir = Path("scripts/train/kai0")
     assert {path.name for path in scripts_dir.glob("train_*.sh")} == expected_scripts
     for script in scripts_dir.glob("train_*.sh"):
         text = script.read_text(encoding="utf-8")
         assert "src.scripts.kai0_train" in text
         assert "kai0/tools_charles" not in text
         assert "cd /data/" not in text
+        assert "/../../.." in text
+
+
+def test_kai0_backend_env_defaults_do_not_override_user_env(monkeypatch):
+    monkeypatch.setenv("CUDA_VISIBLE_DEVICES", "0")
+    profile = load_kai0_train_profile("pi05_put_the_books_back_table30v2_joint_delta")
+
+    spec = build_kai0_launch_spec(profile, num_train_steps=2)
+
+    assert spec.env["CUDA_VISIBLE_DEVICES"] == "0"
+    assert "--batch_size=8" in spec.command

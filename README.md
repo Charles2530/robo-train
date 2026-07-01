@@ -29,8 +29,8 @@ small NumPy demo.
 | --- | --- | --- | --- |
 | [StarVLA](https://github.com/starVLA/starVLA) | Lego-like module boundaries, raw model-agnostic dataloader output, and a model API centered on `forward()` plus `predict_action()`. | `schema/`, `data/adapters/`, `data/processors/`, `training/models/policy.py`, `training/trainer.py`. | Real VLM/VLA backbones, tokenizer plumbing, distributed training, benchmark configs, and full model zoo logic. |
 | [DreamZero / World Action Model](https://dreamzero0.github.io/) | Future-prediction objectives can share the same data and training infra as action policies. | `WorldModelDataView` and `world_model` loss profile keep this training path visible. | Video diffusion, real future-frame generation, GPU inference, WebSocket/distributed inference, and zero-shot claims. |
-| [kai0 / chi0](https://github.com/OpenDriveLab/kai0) | Train-script compatibility, task prompts, image maps, action dimensions, joint/delta action choices, and original dataset/checkpoint path conventions. | `configs/experiments/kai0/`, `src/training/kai0_profiles.py`, `src/scripts/kai0_train.py`, `tools_charles/train/`. | OpenPI/JAX/PyTorch heavy training internals, robot deployment, DAgger collection, and secrets from shell scripts. |
-| [LightX2V](https://github.com/ModelTC/LightX2V) | Practical repo ergonomics: top-level layered `configs/`, runnable scripts, quickstart-first README, and task-oriented command lines. | `configs/base/`, `configs/experiments/kai0/`, `src/config/layered.py`, `src/scripts/`, `tools_charles/train/`. | Image/video generation backends, acceleration kernels, model-format conversion, and GPU serving stack. |
+| [kai0 / chi0](https://github.com/OpenDriveLab/kai0) | Train-script compatibility, task prompts, image maps, action dimensions, joint/delta action choices, and original dataset/checkpoint path conventions. | `configs/experiments/kai0/`, `src/training/kai0_profiles.py`, `src/training/kai0_launcher.py`, `src/scripts/kai0_train.py`, `scripts/train/kai0/`. | Robot deployment, DAgger collection, policy server, and secrets from shell scripts. |
+| [LightX2V](https://github.com/ModelTC/LightX2V) | Practical repo ergonomics: top-level layered `configs/`, runnable scripts, quickstart-first README, and task-oriented command lines. | `configs/base/`, `configs/experiments/kai0/`, `src/config/layered.py`, `src/scripts/`, `scripts/train/kai0/`. | Image/video generation backends, acceleration kernels, model-format conversion, and GPU serving stack. |
 | [LeRobot](https://github.com/huggingface/lerobot) | Dataset/policy/training/deployment separation, reusable configs, and robotics dataset metadata. | `DatasetManifest`, `ExperimentConfig`, `data/adapters/`, `configs/`. | Hugging Face Hub integration, real robot drivers, real pretrained policies, and distributed training. |
 | [robomimic](https://robomimic.github.io/) | Config-driven imitation learning, algorithm abstraction, dataset splits, and reproducible experiment artifacts. | `ExperimentConfig`, `AlgorithmRegistry`, `TrainingArtifact`, `training/trainer.py`. | Real PyTorch algorithms, robosuite integration, and full HDF5 training pipelines. |
 | [ManiSkill](https://maniskill.readthedocs.io/) | Future benchmark adapters should stay outside data/training internals. | Deferred until eval infra is added. | GPU simulation, physics assets, task suites, and reinforcement-learning environments. |
@@ -107,7 +107,7 @@ pytest -q
 python -m src.scripts.run_local_demo
 python -m src.scripts.generate_demo_data --output ./demo_data --episodes 3
 python -m src.scripts.kai0_train pi05_arrange_flowers --dry-run --json
-bash tools_charles/train/train_arrange_flowers_table30v2.sh --dry-run
+bash scripts/train/kai0/train_arrange_flowers_table30v2.sh --dry-run
 ```
 
 ## Directory Structure
@@ -126,7 +126,7 @@ src/
     views/                 # VLA, 3D, and WM model-family views
   training/                # registry, artifacts, mock trainer, losses, minimal policy
   scripts/                 # python -m demo entrypoints
-tools_charles/train/        # Kai0-compatible shell wrappers
+scripts/train/kai0/         # Kai0-compatible shell wrappers
 tests/
 ```
 
@@ -148,9 +148,10 @@ Kai0-compatible training profiles use a LightX2V-style layered config layout:
 `configs/base/model/*.yaml` defines shared model shape,
 `configs/base/train/*.yaml` defines launcher and training defaults, and
 `configs/experiments/kai0/*.yaml` only overrides task data, image mapping,
-prompt, action semantics, and run names. The original Kai0 dataset and
-checkpoint paths remain literal absolute paths in those profiles; the local
-project does not import from or depend on a checked-out `kai0/` folder.
+prompt, action semantics, and run names. The local profiles point data and
+checkpoints at this repository (`data/` and `checkpoints/kai0/...`) while the
+launcher calls a configured, read-only Kai0/OpenPI source checkout for the
+heavy trainer.
 
 `TrainingProfile` is the clearer split between model families. It validates
 that `DataProfile`, `ModelFamily`, `LossProfile`, and `EmbodimentProfile` match:
@@ -174,11 +175,12 @@ and benchmark code can be added later without changing the data protocol.
 
 ## Current Non-Goals
 
-- No real large model training.
+- No fully managed long-running large model training campaign.
 - No runtime server or real robot connection.
 - No real HDF5, LeRobot, or RLDS/OXE parsing.
 - No real video generation or diffusion.
-- No real OpenPI/Kai0 backend execution, DAgger loop, policy server, or simulator backend.
+- No DAgger loop, policy server, or simulator backend. Kai0/OpenPI training
+  can be launched through the configured compatibility backend.
 
 The interfaces are intentionally shaped so those pieces can be added later
 without changing the data or training contracts.

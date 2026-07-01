@@ -1,6 +1,10 @@
 launcher:
   type: jax
   command: scripts/train.py
+  source_root: /data/buaa/code/djy/kai0
+  python_bin: .venv/bin/python
+  fallback_python_bins:
+    - /opt/conda/bin/python
 
 train:
   algorithm: kai0_openpi_compat
@@ -16,8 +20,12 @@ train:
   wandb_enabled: false
 
 checkpoint:
-  params_path: /data/buaa/code/djy/kai0/checkpoints/pi05_base/params
+  params_path: checkpoints/kai0/kai0-base/pi05_base/params
 
 env:
+  CUDA_VISIBLE_DEVICES: 0,1,2,3,4,5,6,7
+  FFMPEG_HOME: /usr/local/ffmpeg
+  CONDA_LIB_PATH: /opt/conda/lib
   JAX_PLATFORMS: cuda
   OPENPI_VIDEO_BACKEND: torchcodec
+  XLA_PYTHON_CLIENT_MEM_FRACTION: "0.9"

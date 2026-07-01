@@ -10,7 +10,7 @@ profile:
   description: Kai0 PyTorch flatten/fold AWBC profile.
 
 data:
-  dataset_path: /data/buaa/vla_dataset/processed/xiaoyu_Task_A/advantage
+  dataset_path: data/xiaoyu_Task_A/advantage
   required_subdir: data
   default_prompt: Flatten and fold the cloth.
   image_map:

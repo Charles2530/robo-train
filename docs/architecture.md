@@ -93,9 +93,10 @@ dataset path, prompt, image mapping, action representation, action dimension,
 and script/run metadata.
 
 `src.training.kai0_profiles` converts the resolved YAML into the existing
-`ExperimentConfig` schema. This keeps Kai0 compatibility inside training infra
-instead of copying the old repository. The original input data and checkpoint
-paths remain unchanged as literal absolute paths, while
-`tools_charles/train/train_*.sh` wrappers call the local
-`python -m src.scripts.kai0_train` entrypoint. Deleting a local `kai0/` checkout
-does not affect these profiles or wrappers.
+`ExperimentConfig` schema, and `src.training.kai0_launcher` resolves the real
+backend command. This keeps Kai0 compatibility inside training infra instead of
+copying the old repository. The profiles point at this repository's `data/` and
+`checkpoints/kai0/...` paths, while `scripts/train/kai0/train_*.sh` wrappers
+call the local `python -m src.scripts.kai0_train` entrypoint. A configured,
+read-only Kai0/OpenPI source checkout supplies the heavy `scripts/train.py`
+backend.
