@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -107,3 +108,123 @@ def test_kai0_backend_env_defaults_do_not_override_user_env(monkeypatch):
 
     assert spec.env["CUDA_VISIBLE_DEVICES"] == "0"
     assert "--batch_size=8" in spec.command
+
+
+def test_table30v2_shell_selects_single_card_defaults():
+    result = subprocess.run(
+        [
+            "bash",
+            "scripts/train/kai0/train_put_the_books_back_table30v2_joint.sh",
+            "--dry-run",
+            "--json",
+        ],
+        cwd=Path.cwd(),
+        check=True,
+        text=True,
+        capture_output=True,
+        env={**os.environ, "CUDA_VISIBLE_DEVICES": "0"},
+    )
+    payload = json.loads(result.stdout)
+    command = payload["kai0_backend"]["command"]
+
+    assert payload["kai0_backend"]["env"]["CUDA_VISIBLE_DEVICES"] == "0"
+    assert "--exp_name=run1-put-books-back-table30v2-joint-50000step-1card-bs8" in command
+    assert "--batch_size=8" in command
+    assert "--num_workers=2" in command
+
+
+def test_table30v2_shell_accepts_cuda_visible_typo():
+    result = subprocess.run(
+        [
+            "bash",
+            "scripts/train/kai0/train_put_the_books_back_table30v2_joint.sh",
+            "--dry-run",
+            "--json",
+        ],
+        cwd=Path.cwd(),
+        check=True,
+        text=True,
+        capture_output=True,
+        env={**os.environ, "CUDA_VISIBLE_DEVICES": "", "CUDA_VISIBEL_DEVICES": "0"},
+    )
+    payload = json.loads(result.stdout)
+    command = payload["kai0_backend"]["command"]
+
+    assert payload["kai0_backend"]["env"]["CUDA_VISIBLE_DEVICES"] == "0"
+    assert "--exp_name=run1-put-books-back-table30v2-joint-50000step-1card-bs8" in command
+    assert "--batch_size=8" in command
+
+
+def test_table30v2_shell_scales_two_card_defaults():
+    result = subprocess.run(
+        [
+            "bash",
+            "scripts/train/kai0/train_put_the_books_back_table30v2_joint.sh",
+            "--dry-run",
+            "--json",
+        ],
+        cwd=Path.cwd(),
+        check=True,
+        text=True,
+        capture_output=True,
+        env={**os.environ, "CUDA_VISIBLE_DEVICES": "0,1"},
+    )
+    payload = json.loads(result.stdout)
+    command = payload["kai0_backend"]["command"]
+
+    assert payload["kai0_backend"]["env"]["CUDA_VISIBLE_DEVICES"] == "0,1"
+    assert "--exp_name=run1-put-books-back-table30v2-joint-50000step-2card-bs64" in command
+    assert "--batch_size=64" in command
+    assert "--num_workers=8" in command
+
+
+def test_table30v2_shell_preserves_eight_card_defaults():
+    result = subprocess.run(
+        [
+            "bash",
+            "scripts/train/kai0/train_put_the_books_back_table30v2_joint.sh",
+            "--dry-run",
+            "--json",
+        ],
+        cwd=Path.cwd(),
+        check=True,
+        text=True,
+        capture_output=True,
+        env={**os.environ, "CUDA_VISIBLE_DEVICES": "0,1,2,3,4,5,6,7"},
+    )
+    payload = json.loads(result.stdout)
+    command = payload["kai0_backend"]["command"]
+
+    assert payload["kai0_backend"]["env"]["CUDA_VISIBLE_DEVICES"] == "0,1,2,3,4,5,6,7"
+    assert "--exp_name=run1-put-books-back-table30v2-joint-50000step-8card-bs256" in command
+    assert "--batch_size=256" in command
+    assert "--num_workers=32" in command
+
+
+def test_table30v2_shell_preserves_explicit_train_args():
+    result = subprocess.run(
+        [
+            "bash",
+            "scripts/train/kai0/train_put_the_books_back_table30v2_joint.sh",
+            "--dry-run",
+            "--json",
+            "--exp_name",
+            "manual-run",
+            "--batch_size",
+            "4",
+            "--num_workers",
+            "1",
+        ],
+        cwd=Path.cwd(),
+        check=True,
+        text=True,
+        capture_output=True,
+        env={**os.environ, "CUDA_VISIBLE_DEVICES": "0"},
+    )
+    payload = json.loads(result.stdout)
+    command = payload["kai0_backend"]["command"]
+
+    assert "--exp_name=manual-run" in command
+    assert "--batch_size=4" in command
+    assert "--num_workers=1" in command
+    assert "--exp_name=run1-put-books-back-table30v2-joint-50000step-1card-bs8" not in command
