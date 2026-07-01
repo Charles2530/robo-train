@@ -1,11 +1,11 @@
 import numpy as np
 
-from src.data.adapters.synthetic_adapter import SyntheticAdapter
-from src.data.processors.pipeline import ProcessorPipeline
-from src.data.views import VLADataView, Policy3DDataView, WorldModelDataView, build_data_view
-from src.schema.training_profile import TrainingProfile
-from src.training.loss_registry import compute_loss_profile
-from src.training.models.policy import UnifiedEmbodiedPolicy
+from robo_train.data.adapters.synthetic_adapter import SyntheticAdapter
+from robo_train.data.processors.pipeline import ProcessorPipeline
+from robo_train.data.views import VLADataView, Policy3DDataView, WorldModelDataView, build_data_view
+from robo_train.schema.training_profile import TrainingProfile
+from robo_train.training.loss_registry import compute_loss_profile
+from robo_train.training.models.policy import UnifiedEmbodiedPolicy
 
 
 def _demo_batch():

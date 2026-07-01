@@ -1,8 +1,8 @@
 import numpy as np
 
-from src.data.adapters.synthetic_adapter import SyntheticAdapter
-from src.data.dataloader import MixedEpisodeDataLoader
-from src.data.storage import NormStats
+from robo_train.data.adapters.synthetic_adapter import SyntheticAdapter
+from robo_train.data.dataloader import MixedEpisodeDataLoader
+from robo_train.data.storage import NormStats
 
 
 def test_norm_stats_fit_transform_and_serializes_round_trip(tmp_path):

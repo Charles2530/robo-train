@@ -1,4 +1,4 @@
-from src.data.adapters.synthetic_adapter import SyntheticAdapter
+from robo_train.data.adapters.synthetic_adapter import SyntheticAdapter
 
 
 def test_synthetic_adapter_generates_complete_episode():

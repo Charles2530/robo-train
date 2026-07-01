@@ -1,5 +1,5 @@
-from src.data.adapters.synthetic_adapter import SyntheticAdapter
-from src.data.processors.pipeline import ProcessorPipeline
+from robo_train.data.adapters.synthetic_adapter import SyntheticAdapter
+from robo_train.data.processors.pipeline import ProcessorPipeline
 
 
 def test_processor_pipeline_builds_predictable_batch():

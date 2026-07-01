@@ -6,7 +6,7 @@
       "manifest": {
         "dataset_id": "synthetic_demo",
         "name": "UEFS Synthetic 3D Policy Demo",
-        "source_framework": "src.synthetic",
+        "source_framework": "robo_train.synthetic",
         "source_uri": "memory://synthetic",
         "task_families": ["pick_place"],
         "robot_families": ["franka"],

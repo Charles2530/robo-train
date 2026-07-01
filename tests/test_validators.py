@@ -1,9 +1,9 @@
-from src.data.adapters.synthetic_adapter import SyntheticAdapter
-from src.data.validators.action_semantics_validator import ActionSemanticsValidator
-from src.data.validators.base_validator import ValidatorPipeline
-from src.data.validators.modality_validator import MissingModalityValidator
-from src.data.validators.robot_compatibility_validator import RobotCompatibilityValidator
-from src.data.validators.timestamp_validator import TimestampValidator
+from robo_train.data.adapters.synthetic_adapter import SyntheticAdapter
+from robo_train.data.validators.action_semantics_validator import ActionSemanticsValidator
+from robo_train.data.validators.base_validator import ValidatorPipeline
+from robo_train.data.validators.modality_validator import MissingModalityValidator
+from robo_train.data.validators.robot_compatibility_validator import RobotCompatibilityValidator
+from robo_train.data.validators.timestamp_validator import TimestampValidator
 
 
 def _pipeline():

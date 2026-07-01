@@ -2,14 +2,14 @@ from pathlib import Path
 
 import pytest
 
-from src.schema.action_semantics import ActionSemantics
-from src.schema.episode import Episode
-from src.schema.frame_graph import FrameGraph, FrameTransform
-from src.schema.robot_card import default_franka_card
-from src.schema.scene_card import ObjectCard, SceneCard, WorkspaceBounds
-from src.schema.sensor_card import CameraIntrinsics, SensorCard
-from src.schema.stream import StreamData, StreamType
-from src.schema.task_card import TaskCard
+from robo_train.schema.action_semantics import ActionSemantics
+from robo_train.schema.episode import Episode
+from robo_train.schema.frame_graph import FrameGraph, FrameTransform
+from robo_train.schema.robot_card import default_franka_card
+from robo_train.schema.scene_card import ObjectCard, SceneCard, WorkspaceBounds
+from robo_train.schema.sensor_card import CameraIntrinsics, SensorCard
+from robo_train.schema.stream import StreamData, StreamType
+from robo_train.schema.task_card import TaskCard
 
 
 def test_schema_serializes_episode_round_trip(tmp_path: Path):

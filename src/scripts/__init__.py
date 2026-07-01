@@ -1,1 +1,1 @@
-"""Runnable scripts for the UEFS demo."""
+"""Legacy script namespace."""

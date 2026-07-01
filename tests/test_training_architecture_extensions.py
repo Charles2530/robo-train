@@ -3,26 +3,26 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from src.data.adapters.synthetic_adapter import SyntheticAdapter
-from src.data.processors.pipeline import ProcessorPipeline
-from src.training.models.policy import UnifiedEmbodiedPolicy
-from src.schema.dataset_manifest import DatasetManifest
-from src.schema.experiment_config import (
+from robo_train.data.adapters.synthetic_adapter import SyntheticAdapter
+from robo_train.data.processors.pipeline import ProcessorPipeline
+from robo_train.training.models.policy import UnifiedEmbodiedPolicy
+from robo_train.schema.dataset_manifest import DatasetManifest
+from robo_train.schema.experiment_config import (
     DatasetConfig,
     ExperimentConfig,
     PolicyConfig,
     TrainerConfig,
 )
-from src.training.algorithm_registry import AlgorithmRegistry, build_policy_from_config
-from src.training.trainer import MockTrainer
-from src.training.artifacts import CheckpointMetadata, TrainingArtifact
+from robo_train.training.algorithm_registry import AlgorithmRegistry, build_policy_from_config
+from robo_train.training.trainer import MockTrainer
+from robo_train.training.artifacts import CheckpointMetadata, TrainingArtifact
 
 
 def test_dataset_manifest_serializes_dataset_lineage(tmp_path: Path):
     manifest = DatasetManifest(
         dataset_id="demo-synthetic",
         name="Synthetic Pick Place",
-        source_framework="src.synthetic",
+        source_framework="robo_train.synthetic",
         source_uri="memory://synthetic",
         task_families=["pick_place"],
         robot_families=["franka"],
@@ -64,7 +64,7 @@ def test_experiment_config_builds_policy_and_trainer_summary():
                 manifest=DatasetManifest(
                     dataset_id="demo-synthetic",
                     name="Synthetic",
-                    source_framework="src.synthetic",
+                    source_framework="robo_train.synthetic",
                     source_uri=None,
                     task_families=["pick_place"],
                     robot_families=["franka"],

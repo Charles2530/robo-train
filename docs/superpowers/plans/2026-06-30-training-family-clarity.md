@@ -117,6 +117,6 @@
 - Produces: passing full test suite and runnable local demo.
 
 - [ ] Run `.venv/bin/python -m pytest -q`.
-- [ ] Run `.venv/bin/python -m src.scripts.run_local_demo`.
+- [ ] Run `.venv/bin/python -m robo_train.scripts.run_local_demo`.
 - [ ] Remove generated caches.
 - [ ] Summarize verification evidence.

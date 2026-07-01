@@ -1,0 +1,35 @@
+defaults:
+  - ../../../base/model/pi05.yaml
+  - ../base/kai0_torch.yaml
+
+profile:
+  config_name: pi05_flatten_fold_awbc_torch
+  script_name: train_pytorch.sh
+  task: flatten_fold_awbc
+  run_name: run1-0603-50000step-8card-bs256
+  description: Kai0 PyTorch flatten/fold AWBC profile.
+
+data:
+  dataset_path: data/xiaoyu_Task_A/advantage
+  required_subdir: data
+  default_prompt: Flatten and fold the cloth.
+  image_map:
+    top_head: global_image
+    hand_left: left_wrist_image
+    hand_right: right_wrist_image
+  state_dim: 14
+  robot_family: agilex_dual_arm
+  task_family: flatten_fold
+  fps: 20.0
+  format: lerobot_v3
+
+action:
+  representation: joint_position
+  action_dim: 14
+  control_mode: absolute
+  use_next_state_as_action: false
+  use_delta_joint_actions: false
+  label_source: action
+
+train:
+  num_train_steps: 70000

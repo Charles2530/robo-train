@@ -81,9 +81,9 @@ at the top level:
 
 ```text
 configs/base/model/pi05.yaml
-configs/base/train/kai0_jax.yaml
-configs/base/train/kai0_torch.yaml
-configs/experiments/kai0/*.yaml
+configs/frameworks/kai0/base/kai0_jax.yaml
+configs/frameworks/kai0/base/kai0_torch.yaml
+configs/frameworks/kai0/tasks/*.yaml
 ```
 
 `src.config.load_layered_yaml()` resolves `defaults` recursively and deep-merges
@@ -92,11 +92,11 @@ Pi0/Pi05 model layer and the JAX or PyTorch train layer, then only override
 dataset path, prompt, image mapping, action representation, action dimension,
 and script/run metadata.
 
-`src.training.kai0_profiles` converts the resolved YAML into the existing
-`ExperimentConfig` schema, and `src.training.kai0_launcher` resolves the real
+`robo_train.frameworks.kai0.converter` converts the resolved YAML into the existing
+`ExperimentConfig` schema, and `robo_train.frameworks.kai0.launcher` resolves the real
 backend command. This keeps Kai0 compatibility inside training infra instead of
 copying the old repository. The profiles point at this repository's `data/` and
-`checkpoints/kai0/...` paths, while `scripts/train/kai0/train_*.sh` wrappers
-call the local `python -m src.scripts.kai0_train` entrypoint. A configured,
+`checkpoints/kai0/...` paths, while `scripts/frameworks/kai0/train_*.sh` wrappers
+call the local `python -m robo_train.cli.train --framework kai0` entrypoint. A configured,
 read-only Kai0/OpenPI source checkout supplies the heavy `scripts/train.py`
 backend.

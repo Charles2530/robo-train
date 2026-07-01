@@ -4,8 +4,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from src.training.kai0_launcher import build_kai0_launch_spec
-from src.training.kai0_profiles import build_experiment_config, load_kai0_train_profile
+from robo_train.training.kai0_launcher import build_kai0_launch_spec
+from robo_train.training.kai0_profiles import build_experiment_config, load_kai0_train_profile
 
 
 def test_kai0_layered_profile_preserves_dataset_and_checkpoint_paths():
@@ -51,7 +51,9 @@ def test_kai0_train_cli_dry_run_does_not_need_kai0_folder():
         [
             sys.executable,
             "-m",
-            "src.scripts.kai0_train",
+            "robo_train.cli.train",
+            "--framework",
+            "kai0",
             "pi05_arrange_flowers",
             "--dry-run",
             "--json",
@@ -64,6 +66,7 @@ def test_kai0_train_cli_dry_run_does_not_need_kai0_folder():
         check=True,
         text=True,
         capture_output=True,
+        env={**os.environ, "PYTHONPATH": f"{Path.cwd() / 'src'}{os.pathsep}{os.environ.get('PYTHONPATH', '')}"},
     )
     payload = json.loads(result.stdout)
 
@@ -90,11 +93,11 @@ def test_top_level_kai0_compatible_train_scripts_call_local_launcher():
         "train_pytorch.sh",
     }
 
-    scripts_dir = Path("scripts/train/kai0")
+    scripts_dir = Path("scripts/frameworks/kai0")
     assert {path.name for path in scripts_dir.glob("train_*.sh")} == expected_scripts
     for script in scripts_dir.glob("train_*.sh"):
         text = script.read_text(encoding="utf-8")
-        assert "src.scripts.kai0_train" in text
+        assert "robo_train.cli.train --framework kai0" in text
         assert "kai0/tools_charles" not in text
         assert "cd /data/" not in text
         assert "/../../.." in text
@@ -110,11 +113,21 @@ def test_kai0_backend_env_defaults_do_not_override_user_env(monkeypatch):
     assert "--batch_size=8" in spec.command
 
 
+def test_kai0_backend_library_order_matches_reference_shell(monkeypatch):
+    monkeypatch.setenv("LD_LIBRARY_PATH", "/opt/conda/lib:/existing/lib:/usr/local/ffmpeg/lib")
+    profile = load_kai0_train_profile("pi05_put_the_books_back_table30v2_joint")
+
+    spec = build_kai0_launch_spec(profile, num_train_steps=2)
+    libs = spec.env["LD_LIBRARY_PATH"].split(os.pathsep)
+
+    assert libs[:3] == ["/usr/local/ffmpeg/lib", "/opt/conda/lib", "/existing/lib"]
+
+
 def test_table30v2_shell_selects_single_card_defaults():
     result = subprocess.run(
         [
             "bash",
-            "scripts/train/kai0/train_put_the_books_back_table30v2_joint.sh",
+            "scripts/frameworks/kai0/train_put_the_books_back_table30v2_joint.sh",
             "--dry-run",
             "--json",
         ],
@@ -137,7 +150,7 @@ def test_table30v2_shell_accepts_cuda_visible_typo():
     result = subprocess.run(
         [
             "bash",
-            "scripts/train/kai0/train_put_the_books_back_table30v2_joint.sh",
+            "scripts/frameworks/kai0/train_put_the_books_back_table30v2_joint.sh",
             "--dry-run",
             "--json",
         ],
@@ -159,7 +172,7 @@ def test_table30v2_shell_scales_two_card_defaults():
     result = subprocess.run(
         [
             "bash",
-            "scripts/train/kai0/train_put_the_books_back_table30v2_joint.sh",
+            "scripts/frameworks/kai0/train_put_the_books_back_table30v2_joint.sh",
             "--dry-run",
             "--json",
         ],
@@ -182,7 +195,7 @@ def test_table30v2_shell_preserves_eight_card_defaults():
     result = subprocess.run(
         [
             "bash",
-            "scripts/train/kai0/train_put_the_books_back_table30v2_joint.sh",
+            "scripts/frameworks/kai0/train_put_the_books_back_table30v2_joint.sh",
             "--dry-run",
             "--json",
         ],
@@ -205,7 +218,7 @@ def test_table30v2_shell_preserves_explicit_train_args():
     result = subprocess.run(
         [
             "bash",
-            "scripts/train/kai0/train_put_the_books_back_table30v2_joint.sh",
+            "scripts/frameworks/kai0/train_put_the_books_back_table30v2_joint.sh",
             "--dry-run",
             "--json",
             "--exp_name",

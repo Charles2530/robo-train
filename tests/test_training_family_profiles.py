@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from src.schema.experiment_config import ExperimentConfig
-from src.schema.training_profile import (
+from robo_train.schema.experiment_config import ExperimentConfig
+from robo_train.schema.training_profile import (
     DataProfile,
     EmbodimentProfile,
     LossProfile,
