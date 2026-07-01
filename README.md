@@ -154,7 +154,7 @@ Kai0-compatible training profiles use a LightX2V-style layered config layout:
 `configs/frameworks/kai0/base/*.yaml` defines launcher and training defaults, and
 `configs/frameworks/kai0/tasks/*.yaml` only overrides task data, image mapping,
 prompt, action semantics, and run names. The local profiles point data and
-checkpoints at this repository (`data/` and `checkpoints/kai0/...`) while the
+checkpoints at this repository (`datasets/` and `checkpoints/kai0/...`) while the
 launcher calls a configured, read-only Kai0/OpenPI source checkout for the
 heavy trainer.
 

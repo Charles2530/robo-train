@@ -130,7 +130,7 @@ IR 是 Protocol-first 的：它明确区分 raw actions 和 canonical actions，
 Kai0 兼容训练 profile 采用 LightX2V 风格的多层配置：
 `configs/base/model/*.yaml` 定义共享模型形态，
 `configs/frameworks/kai0/base/*.yaml` 定义 launcher 和训练默认值，
-`configs/frameworks/kai0/tasks/*.yaml` 只覆盖任务数据、图像映射、prompt、动作语义和 run name。当前本地 profile 指向本仓库的 `data/` 和 `checkpoints/kai0/...`，真实重训练由配置中的只读 Kai0/OpenPI 源码后端执行。
+`configs/frameworks/kai0/tasks/*.yaml` 只覆盖任务数据、图像映射、prompt、动作语义和 run name。当前本地 profile 指向本仓库的 `datasets/` 和 `checkpoints/kai0/...`，真实重训练由配置中的只读 Kai0/OpenPI 源码后端执行。
 
 `TrainingProfile` 是更清楚的模型家族分流点。它要求 `DataProfile`、`ModelFamily`、`LossProfile` 和 `EmbodimentProfile` 对齐：VLA 使用图像-语言-state batch 和 `vla_bc`；3D policy 使用 point/state geometry 和 `policy_3d_bc`；WM 使用 context/action/future target 和 `world_model`。
 

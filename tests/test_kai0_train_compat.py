@@ -12,7 +12,7 @@ def test_kai0_layered_profile_preserves_dataset_and_checkpoint_paths():
     profile = load_kai0_train_profile("pi05_put_the_books_back_table30v2_joint_delta")
 
     assert profile.config_name == "pi05_put_the_books_back_table30v2_joint_delta"
-    assert profile.data.dataset_path == "data/RoboChallenge_Table30v2_v2.1_pyav_g2/put_the_books_back"
+    assert profile.data.dataset_path == "datasets/RoboChallenge_Table30v2_v2.1_pyav_g2/put_the_books_back"
     assert profile.checkpoint.params_path == "checkpoints/kai0/kai0-base/pi05_base/params"
     assert profile.data.image_map == {
         "top_head": "global_image",
@@ -71,12 +71,12 @@ def test_kai0_train_cli_dry_run_does_not_need_kai0_folder():
     payload = json.loads(result.stdout)
 
     assert payload["profile"]["config_name"] == "pi05_arrange_flowers"
-    assert payload["profile"]["data"]["dataset_path"] == "data/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers"
+    assert payload["profile"]["data"]["dataset_path"] == "datasets/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers"
     assert payload["experiment"]["experiment_id"] == "dry-run-arrange"
     assert payload["experiment"]["trainer"]["kwargs"]["num_train_steps"] == 3
     assert payload["kai0_backend"]["command"][1] == "scripts/train.py"
     assert "--data.repo-id=" in " ".join(payload["kai0_backend"]["command"])
-    assert "robo-train/data/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers" in " ".join(
+    assert "robo-train/datasets/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers" in " ".join(
         payload["kai0_backend"]["command"]
     )
 

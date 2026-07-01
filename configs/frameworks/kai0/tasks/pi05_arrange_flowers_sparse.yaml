@@ -9,5 +9,5 @@ profile:
   description: Kai0 sparse arrange-flowers script profile.
 
 data:
-  dataset_path: data/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers
+  dataset_path: datasets/RoboChallenge_Table30_v2.1_pyav_g2/arrange_flowers
   required_subdir: videos

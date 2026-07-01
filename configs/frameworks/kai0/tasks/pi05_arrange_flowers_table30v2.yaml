@@ -10,7 +10,7 @@ profile:
   description: Kai0 Table30v2 arrange-flowers profile.
 
 data:
-  dataset_path: data/RoboChallenge_Table30v2_v2.1_pyav_g2/arrange_flowers
+  dataset_path: datasets/RoboChallenge_Table30v2_v2.1_pyav_g2/arrange_flowers
   required_subdir: videos
   default_prompt: Put the 4 flowers into the vase.
   image_map:

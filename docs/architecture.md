@@ -95,7 +95,7 @@ and script/run metadata.
 `robo_train.frameworks.kai0.converter` converts the resolved YAML into the existing
 `ExperimentConfig` schema, and `robo_train.frameworks.kai0.launcher` resolves the real
 backend command. This keeps Kai0 compatibility inside training infra instead of
-copying the old repository. The profiles point at this repository's `data/` and
+copying the old repository. The profiles point at this repository's `datasets/` and
 `checkpoints/kai0/...` paths, while `scripts/frameworks/kai0/train_*.sh` wrappers
 call the local `python -m robo_train.cli.train --framework kai0` entrypoint. A configured,
 read-only Kai0/OpenPI source checkout supplies the heavy `scripts/train.py`

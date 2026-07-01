@@ -221,7 +221,7 @@ def _build_env(
     ordered_libs = [path for path in (f"{ffmpeg_home}/lib" if ffmpeg_home else None, conda_lib_path) if path]
     env["LD_LIBRARY_PATH"] = _prepend_paths(ordered_libs, env.get("LD_LIBRARY_PATH", ""))
     env["KAI0_ROOT"] = str(PROJECT_ROOT)
-    env["TASK_A_ROOT"] = str(PROJECT_ROOT / "data" / "xiaoyu_Task_A")
+    env["TASK_A_ROOT"] = str(PROJECT_ROOT / "datasets" / "xiaoyu_Task_A")
     env["PYTHONPATH"] = _prepend_path(str(source / "src"), env.get("PYTHONPATH", ""))
 
     if env.get("DEBUG") == "1":
@@ -242,15 +242,15 @@ def _prepare_encode_dataset(
 ) -> Path:
     variant = _resolve_encode_variant(encode_variant)
     src_dataset = _resolve_project_path(
-        (env_overrides or {}).get("SRC_DATASET", "data/temp/arrange_flowers_v2.1")
+        (env_overrides or {}).get("SRC_DATASET", "datasets/temp/arrange_flowers_v2.1")
     )
     if not (src_dataset / "videos").is_dir():
-        sparse = _resolve_project_path("data/temp/arrange_flowers_v2.1_sparse")
+        sparse = _resolve_project_path("datasets/temp/arrange_flowers_v2.1_sparse")
         if (sparse / "videos").is_dir():
             src_dataset = sparse
     bench_dir = _resolve_project_path((env_overrides or {}).get("BENCH_DIR", "video_encode_bench_arrange_flowers"))
     encode_mp4 = bench_dir / f"{variant}.mp4"
-    dst = _resolve_project_path(f"data/temp/arrange_flowers_encode_{variant}")
+    dst = _resolve_project_path(f"datasets/temp/arrange_flowers_encode_{variant}")
     executable = _resolve_python(profile, source=source)
     cmd = [
         executable,

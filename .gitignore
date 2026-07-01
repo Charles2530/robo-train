@@ -12,5 +12,5 @@ demo_data/
 rollout_logs/
 *.egg-info/
 checkpoints/
-data
+datasets
 logs/
